@@ -1,3 +1,4 @@
+Punnawit janthamrong 6611507168  Major:Multimedia and E-Sports  Chandrakasem Rajabhat University
 # 🎮 English Quiz Adventure
 
 เกมตอบคำถามภาษาอังกฤษแบบ Interactive รองรับ 3 ระดับความยาก (พื้นฐาน, ปานกลาง, สูงสุด) พร้อมระบบเสียง Web Audio API, การอ่านออกเสียงคำศัพท์ Native TTS และ Terminal QR Code สำหรับสแกนเล่นผ่านสมาร์ตโฟนได้ทันที
