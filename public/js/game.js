@@ -58,6 +58,18 @@ class EnglishQuizGame {
         this.progress = {
             totalScore: 0,
             maxCombo: 0,
+            coins: 100,
+            equippedTheme: 'cyberpunk',
+            unlockedThemes: ['cyberpunk'],
+            equippedHat: 'none',
+            unlockedHats: ['none'],
+            highScores: {
+                timeAttack: 0,
+                endless: 0,
+                bossDefeated: 0,
+                duelWinsP1: 0,
+                duelWinsP2: 0
+            },
             unlocked: {
                 basic: 1,
                 intermediate: 1,
@@ -70,14 +82,47 @@ class EnglishQuizGame {
             }
         };
 
+        // Duel Mode State
+        this.duelScoreP1 = 0;
+        this.duelScoreP2 = 0;
+        this.duelCurrentQuestion = null;
+        this.duelP1Locked = false;
+        this.duelP2Locked = false;
+        this.duelRoundTimer = null;
+
+        // Time Attack State
+        this.taTimer = null;
+        this.taTimeRemaining = 60.0;
+        this.taScore = 0;
+        this.taCombo = 0;
+        this.taSolved = 0;
+        this.taCurrentQuestion = null;
+
+        // Endless Mode State
+        this.endlessWave = 1;
+        this.endlessScore = 0;
+        this.endlessLives = 3;
+        this.endlessCurrentQuestion = null;
+
+        // Boss Battle State
+        this.bossMaxHp = 1000;
+        this.bossHp = 1000;
+        this.bossLives = 3;
+        this.bossTurnSeconds = 15;
+        this.bossTurnTimer = null;
+        this.bossCurrentQuestion = null;
+
         this.initDOM();
         this.loadProgress();
+        this.applyTheme(this.progress.equippedTheme || 'cyberpunk', false);
+        this.renderMascotHats();
         this.setupFireworksAndConfetti();
         this.bindEvents();
         this.setupAutoplayAudio();
         this.updatePowerupBadges();
         this.initSpotlight();
         this.updateSidebars();
+        this.initMascots();
     }
 
     initDOM() {
@@ -85,11 +130,25 @@ class EnglishQuizGame {
         this.screenLevelSelect = document.getElementById('screenLevelSelect');
         this.screenStageMap = document.getElementById('screenStageMap');
         this.screenGameplay = document.getElementById('screenGameplay');
+        this.screenDuel = document.getElementById('screenDuel');
+        this.screenTimeAttack = document.getElementById('screenTimeAttack');
+        this.screenEndless = document.getElementById('screenEndless');
+        this.screenBoss = document.getElementById('screenBoss');
 
         // Modals
         this.modalStageClear = document.getElementById('modalStageClear');
         this.modalLevelVictory = document.getElementById('modalLevelVictory');
         this.modalGameOver = document.getElementById('modalGameOver');
+        this.modalShop = document.getElementById('modalShop');
+        this.modalCertificate = document.getElementById('modalCertificate');
+        this.modalDuelVictory = document.getElementById('modalDuelVictory');
+        this.modalTimeAttackSummary = document.getElementById('modalTimeAttackSummary');
+        this.modalBossVictory = document.getElementById('modalBossVictory');
+
+        // Coin Displays
+        this.headerCoinCount = document.getElementById('headerCoinCount');
+        this.statTotalCoins = document.getElementById('statTotalCoins');
+        this.shopCoinCount = document.getElementById('shopCoinCount');
 
         // Character Overlay
         this.characterOverlay = document.getElementById('characterOverlay');
@@ -116,6 +175,9 @@ class EnglishQuizGame {
         this.statTotalScore = document.getElementById('statTotalScore');
         this.statClearedStages = document.getElementById('statClearedStages');
         this.statMaxCombo = document.getElementById('statMaxCombo');
+        this.bestTimeAttack = document.getElementById('bestTimeAttack');
+        this.bestEndless = document.getElementById('bestEndless');
+        this.bossDefeatedBadge = document.getElementById('bossDefeatedBadge');
 
         // Audio Volume Controls
         this.btnSoundToggle = document.getElementById('btnSoundToggle');
@@ -158,12 +220,22 @@ class EnglishQuizGame {
         try {
             const saved = localStorage.getItem('EQA_PROGRESS');
             if (saved) {
-                this.progress = JSON.parse(saved);
+                const parsed = JSON.parse(saved);
+                this.progress = {
+                    ...this.progress,
+                    ...parsed,
+                    unlocked: { ...this.progress.unlocked, ...(parsed.unlocked || {}) },
+                    completed: { ...this.progress.completed, ...(parsed.completed || {}) },
+                    highScores: { ...this.progress.highScores, ...(parsed.highScores || {}) },
+                    unlockedThemes: parsed.unlockedThemes || ['cyberpunk'],
+                    unlockedHats: parsed.unlockedHats || ['none']
+                };
             }
         } catch (e) {
             console.warn('Could not load saved progress:', e);
         }
         this.updateHomeStats();
+        this.updateCoinDisplays();
     }
 
     saveProgress() {
@@ -173,28 +245,52 @@ class EnglishQuizGame {
             console.warn('Could not save progress:', e);
         }
         this.updateHomeStats();
+        this.updateCoinDisplays();
     }
 
     resetAllData() {
-        if (confirm('Are you sure you want to reset all game progress, inventory and high scores?')) {
+        if (confirm('Are you sure you want to reset all game progress, coins, inventory and high scores?')) {
             this.progress = {
                 totalScore: 0,
                 maxCombo: 0,
+                coins: 100,
+                equippedTheme: 'cyberpunk',
+                unlockedThemes: ['cyberpunk'],
+                equippedHat: 'none',
+                unlockedHats: ['none'],
+                highScores: { timeAttack: 0, endless: 0, bossDefeated: 0, duelWinsP1: 0, duelWinsP2: 0 },
                 unlocked: { basic: 1, intermediate: 1, advanced: 1 },
                 completed: { basic: [], intermediate: [], advanced: [] }
             };
             this.inventory = { reveal: 2, heal: 1, skip: 1 };
             this.saveProgress();
+            this.applyTheme('cyberpunk', true);
+            this.renderMascotHats();
             this.updateHomeStats();
             this.updatePowerupBadges();
             soundManager.playClick();
         }
     }
 
+    addCoins(amount) {
+        if (typeof amount !== 'number' || isNaN(amount) || amount === 0) return;
+        this.progress.coins = Math.max(0, (this.progress.coins || 0) + amount);
+        this.saveProgress();
+        if (amount > 0) soundManager.playCoin();
+        this.updateCoinDisplays();
+    }
+
+    updateCoinDisplays() {
+        const c = this.progress.coins || 0;
+        if (this.headerCoinCount) this.headerCoinCount.textContent = c;
+        if (this.statTotalCoins) this.statTotalCoins.textContent = c;
+        if (this.shopCoinCount) this.shopCoinCount.textContent = c;
+    }
+
     updateHomeStats() {
         if (!this.statTotalScore) return;
-        this.statTotalScore.textContent = this.progress.totalScore;
-        this.statMaxCombo.textContent = `${this.progress.maxCombo}x`;
+        this.statTotalScore.textContent = this.progress.totalScore || 0;
+        this.statMaxCombo.textContent = `${this.progress.maxCombo || 0}x`;
 
         let totalCompleted = 0;
         ['basic', 'intermediate', 'advanced'].forEach(lvl => {
@@ -202,7 +298,12 @@ class EnglishQuizGame {
         });
         this.statClearedStages.textContent = `${totalCompleted}/33`;
 
+        if (this.bestTimeAttack) this.bestTimeAttack.textContent = `Best: ${this.progress.highScores?.timeAttack || 0} pts`;
+        if (this.bestEndless) this.bestEndless.textContent = `Best: Wave ${this.progress.highScores?.endless || 0}`;
+        if (this.bossDefeatedBadge) this.bossDefeatedBadge.textContent = `Defeated: ${this.progress.highScores?.bossDefeated || 0}`;
+
         this.updateSidebars();
+        this.updateCoinDisplays();
     }
 
     initSpotlight() {
@@ -407,18 +508,88 @@ class EnglishQuizGame {
         if (resetBtn) {
             resetBtn.addEventListener('click', () => this.resetAllData());
         }
+
+        // Close modals when clicking the overlay backdrop outside of modal-content
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    this.closeAllModals();
+                }
+            });
+        });
+
+        // Close modals when pressing Escape key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.closeAllModals();
+            }
+        });
+
+        // Global Keyboard Shortcuts for 2-Player Duel Mode
+        window.addEventListener('keydown', (e) => {
+            if (!this.screenDuel || !this.screenDuel.classList.contains('active')) return;
+            const key = e.key.toLowerCase();
+            
+            // Player 1: a, s, d, f
+            if (['a', 's', 'd', 'f'].includes(key)) {
+                const map = { 'a': 0, 's': 1, 'd': 2, 'f': 3 };
+                this.handleDuelAnswer(1, map[key]);
+            }
+            // Player 2: h, j, k, l or 1,2,3,4
+            if (['h', 'j', 'k', 'l'].includes(key)) {
+                const map = { 'h': 0, 'j': 1, 'k': 2, 'l': 3 };
+                this.handleDuelAnswer(2, map[key]);
+            }
+        });
     }
 
     switchScreen(screenName) {
-        [this.screenLevelSelect, this.screenStageMap, this.screenGameplay].forEach(s => s.classList.remove('active'));
-        if (screenName === 'home') this.screenLevelSelect.classList.add('active');
-        if (screenName === 'map') this.screenStageMap.classList.add('active');
-        if (screenName === 'game') this.screenGameplay.classList.add('active');
+        [
+            this.screenLevelSelect,
+            this.screenStageMap,
+            this.screenGameplay,
+            this.screenDuel,
+            this.screenTimeAttack,
+            this.screenEndless,
+            this.screenBoss
+        ].forEach(s => {
+            if (s) s.classList.remove('active');
+        });
+
+        if (screenName === 'home' && this.screenLevelSelect) this.screenLevelSelect.classList.add('active');
+        if (screenName === 'map' && this.screenStageMap) this.screenStageMap.classList.add('active');
+        if (screenName === 'game' && this.screenGameplay) this.screenGameplay.classList.add('active');
+        if (screenName === 'duel' && this.screenDuel) this.screenDuel.classList.add('active');
+        if (screenName === 'timeattack' && this.screenTimeAttack) this.screenTimeAttack.classList.add('active');
+        if (screenName === 'endless' && this.screenEndless) this.screenEndless.classList.add('active');
+        if (screenName === 'boss' && this.screenBoss) this.screenBoss.classList.add('active');
+
         this.closeAllModals();
+        if (screenName === 'home') {
+            this.cleanupTimers();
+            this.updateHomeStats();
+        }
     }
 
     closeAllModals() {
-        [this.modalStageClear, this.modalLevelVictory, this.modalGameOver].forEach(m => m.classList.remove('active'));
+        [
+            this.modalStageClear,
+            this.modalLevelVictory,
+            this.modalGameOver,
+            this.modalShop,
+            this.modalCertificate,
+            this.modalDuelVictory,
+            this.modalTimeAttackSummary,
+            this.modalBossVictory
+        ].forEach(m => {
+            if (m) m.classList.remove('active');
+        });
+    }
+
+    cleanupTimers() {
+        if (this.taTimer) { clearInterval(this.taTimer); this.taTimer = null; }
+        if (this.bossTurnTimer) { clearInterval(this.bossTurnTimer); this.bossTurnTimer = null; }
+        if (this.duelRoundTimer) { clearTimeout(this.duelRoundTimer); this.duelRoundTimer = null; }
     }
 
     // 1. Navigation: Level Select -> Stage Map
@@ -736,10 +907,14 @@ class EnglishQuizGame {
             this.progress.maxCombo = this.maxCombo;
         }
 
-        // Rewards for clearing stages: gain extra power-ups!
+        // Rewards for clearing stages: gain extra power-ups & coins!
+        const coinEarned = isSpecial ? 50 : (20 + Math.min(this.combo * 5, 25));
+        this.addCoins(coinEarned);
+
         if (stageData.stage === 5 || stageData.stage === 10) {
             this.inventory.reveal += 1;
             this.inventory.heal += 1;
+            this.addCoins(100);
             this.updatePowerupBadges();
         }
 
@@ -773,7 +948,7 @@ class EnglishQuizGame {
         this.fireConfetti(isSpecial ? 100 : 70);
 
         this.userInput.classList.add('correct-pulse');
-        this.showFeedback(true, isSpecial ? '⭐ SPECIAL BONUS CLEARED!' : '🎉 CORRECT ANSWER!', `${stageData.explanation || ''}`);
+        this.showFeedback(true, isSpecial ? '⭐ SPECIAL BONUS CLEARED! (+50 🪙)' : `🎉 CORRECT ANSWER! (+${coinEarned} 🪙)`, `${stageData.explanation || ''}`);
 
         setTimeout(() => {
             if (this.currentStageIndex === totalStagesInTier - 1) {
@@ -837,6 +1012,22 @@ class EnglishQuizGame {
             explElem.innerHTML = `<strong>💡 Knowledge & Insights:</strong><br>${stageData.explanation || ''}`;
         }
         this.modalStageClear.classList.add('active');
+    }
+
+    closeAllModals() {
+        const modals = [
+            this.modalStageClear,
+            this.modalLevelVictory,
+            this.modalGameOver,
+            this.modalShop,
+            this.modalCertificate,
+            this.modalDuelVictory,
+            this.modalTimeAttackSummary,
+            this.modalBossVictory
+        ];
+        modals.forEach(m => {
+            if (m) m.classList.remove('active');
+        });
     }
 
     nextStage() {
@@ -1084,7 +1275,1252 @@ class EnglishQuizGame {
             this.isAnimatingFX = false;
         }
     }
+
+    // ==========================================
+    // 6. CUTE ROAMING MASCOT INTERACTIONS
+    // ==========================================
+    initMascots() {
+        this.mascotLeft = document.getElementById('mascotLeft');
+        this.mascotRight = document.getElementById('mascotRight');
+        this.mascotSpeechLeft = document.getElementById('mascotSpeechLeft');
+        this.mascotSpeechRight = document.getElementById('mascotSpeechRight');
+        this.mascotSparkleLeft = document.getElementById('mascotSparkleLeft');
+        this.mascotSparkleRight = document.getElementById('mascotSparkleRight');
+
+        this.mascotPetCounts = { left: 0, right: 0 };
+
+        this.mascotLeftQuotes = [
+            'Meow! 🐾 Welcome Adventurer! ✨',
+            'English is fun! Let\'s go! 🚀',
+            'Purr~ Click me again! ฅ^•ﻌ•^ฅ',
+            'You have incredible potential! 🌟',
+            'Master every stage, Champion! 🎮',
+            'Meow-velous reflexes! 🐱💖',
+            'Keep your streak on fire! 🔥',
+            'High Five! 🐾 +Energy Boost!'
+        ];
+
+        this.mascotRightQuotes = [
+            'Let\'s Go! ⚡ High Score Time!',
+            'Woof! You can do it! 🚀⭐',
+            'Keep that combo streak alive! 🔥',
+            '100% Accuracy incoming! 🎯',
+            'Believe in yourself! Woof! 🐾',
+            'Super Explorer energy! 🐾✨',
+            'Grammar Knight in the making! 🛡️',
+            'Double Points incoming! 🏆⚡'
+        ];
+
+        this.mascotLeftTimer = null;
+        this.mascotRightTimer = null;
+
+        // Auto greeting speech bubble on initial load
+        setTimeout(() => {
+            this.showMascotBubble('left', 'Meow! 🐾 Welcome Adventurer!', 3200);
+            setTimeout(() => {
+                this.showMascotBubble('right', 'Let\'s Go! ⚡ High Score!', 3200);
+            }, 1400);
+        }, 800);
+    }
+
+    showMascotBubble(side, text, duration = 3200) {
+        const bubble = side === 'left' ? this.mascotSpeechLeft : this.mascotSpeechRight;
+        if (!bubble) return;
+
+        bubble.textContent = text;
+        bubble.classList.add('active');
+
+        const timerKey = side === 'left' ? 'mascotLeftTimer' : 'mascotRightTimer';
+        if (this[timerKey]) clearTimeout(this[timerKey]);
+
+        this[timerKey] = setTimeout(() => {
+            bubble.classList.remove('active');
+        }, duration);
+    }
+
+    interactMascot(side) {
+        soundManager.playMascotPet(side);
+
+        const isLeft = (side === 'left');
+        const mascotEl = isLeft ? this.mascotLeft : this.mascotRight;
+        const sparkleEl = isLeft ? this.mascotSparkleLeft : this.mascotSparkleRight;
+        const quotes = isLeft ? this.mascotLeftQuotes : this.mascotRightQuotes;
+        const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
+
+        this.mascotPetCounts[side] = (this.mascotPetCounts[side] || 0) + 1;
+
+        // Easter Egg: Every 4 clicks gives +5 Gold Coins gift!
+        if (this.mascotPetCounts[side] % 4 === 0) {
+            this.addCoins(5);
+            soundManager.playCoin();
+            this.showMascotBubble(side, `🎁 Mascot Gift! +5 Coins 🪙`, 3600);
+            this.fireConfetti(35);
+        } else {
+            this.showMascotBubble(side, randomQuote, 3400);
+            this.fireConfetti(15);
+        }
+
+        // Visual Sparkle Pop with random dynamic emojis
+        if (sparkleEl) {
+            const sparkleEmojis = isLeft 
+                ? ['✨💖🐾', '🌸🐱✨', '💫💖🐾', '🌟🐱💎'] 
+                : ['⭐🔥🎉', '🌟🐶🚀', '⚡💎⭐', '🐾🔥✨'];
+            sparkleEl.textContent = sparkleEmojis[Math.floor(Math.random() * sparkleEmojis.length)];
+            
+            sparkleEl.classList.remove('pop');
+            void sparkleEl.offsetWidth; // Force reflow
+            sparkleEl.classList.add('pop');
+            setTimeout(() => sparkleEl.classList.remove('pop'), 650);
+        }
+
+        // Aerial 360 Spin Flip with scale bounce
+        if (mascotEl) {
+            mascotEl.classList.remove('spin-flip');
+            void mascotEl.offsetWidth; // Force reflow
+            mascotEl.classList.add('spin-flip');
+            setTimeout(() => {
+                mascotEl.classList.remove('spin-flip');
+            }, 780);
+        }
+    }
+
+    // ==========================================
+    // 7. 🛒 ARCADE SHOP, THEMES & MASCOT WARDROBE
+    // ==========================================
+    openShop() {
+        soundManager.playClick();
+        this.updateShopUI();
+        if (this.modalShop) this.modalShop.classList.add('active');
+    }
+
+    switchShopTab(tabName) {
+        soundManager.playClick();
+        const tabs = document.querySelectorAll('.shop-tab-btn');
+        const panes = document.querySelectorAll('.shop-tab-pane');
+        tabs.forEach(t => t.classList.remove('active'));
+        panes.forEach(p => p.classList.remove('active'));
+
+        if (tabName === 'powerups') {
+            tabs[0]?.classList.add('active');
+            document.getElementById('shopTabPowerups')?.classList.add('active');
+        } else if (tabName === 'themes') {
+            tabs[1]?.classList.add('active');
+            document.getElementById('shopTabThemes')?.classList.add('active');
+        } else if (tabName === 'hats') {
+            tabs[2]?.classList.add('active');
+            document.getElementById('shopTabHats')?.classList.add('active');
+        }
+    }
+
+    updateShopUI() {
+        this.updateCoinDisplays();
+        const ownedReveal = document.getElementById('shopOwnedReveal');
+        const ownedHeal = document.getElementById('shopOwnedHeal');
+        const ownedSkip = document.getElementById('shopOwnedSkip');
+
+        if (ownedReveal) ownedReveal.textContent = this.inventory.reveal;
+        if (ownedHeal) ownedHeal.textContent = this.inventory.heal;
+        if (ownedSkip) ownedSkip.textContent = this.inventory.skip;
+
+        // Update Theme Buttons
+        const themes = ['cyberpunk', 'synthwave', 'emerald', 'pastel', 'midnight'];
+        themes.forEach(theme => {
+            const btn = document.getElementById(`btnTheme${theme.charAt(0).toUpperCase() + theme.slice(1)}`);
+            if (!btn) return;
+
+            const isUnlocked = (this.progress.unlockedThemes || ['cyberpunk']).includes(theme);
+            const isEquipped = (this.progress.equippedTheme === theme);
+
+            if (isEquipped) {
+                btn.className = 'shop-theme-action-btn equipped';
+                btn.textContent = '✓ Equipped';
+                btn.disabled = true;
+            } else if (isUnlocked) {
+                btn.className = 'shop-theme-action-btn';
+                btn.textContent = 'Equip';
+                btn.disabled = false;
+            } else {
+                btn.className = 'shop-theme-action-btn';
+                const costs = { synthwave: 300, emerald: 300, pastel: 400, midnight: 500 };
+                btn.textContent = `🪙 ${costs[theme] || 300} Unlock`;
+                btn.disabled = false;
+            }
+        });
+
+        // Update Hat Buttons
+        const hats = ['none', 'wizard', 'crown', 'goggles', 'halo', 'pirate'];
+        hats.forEach(hat => {
+            const btn = document.getElementById(`btnHat${hat.charAt(0).toUpperCase() + hat.slice(1)}`);
+            if (!btn) return;
+
+            const isUnlocked = (this.progress.unlockedHats || ['none']).includes(hat);
+            const isEquipped = (this.progress.equippedHat === hat);
+
+            if (isEquipped) {
+                btn.className = 'shop-hat-action-btn equipped';
+                btn.textContent = '✓ Equipped';
+                btn.disabled = true;
+            } else if (isUnlocked) {
+                btn.className = 'shop-hat-action-btn';
+                btn.textContent = 'Equip';
+                btn.disabled = false;
+            } else {
+                btn.className = 'shop-hat-action-btn';
+                const costs = { wizard: 250, crown: 400, goggles: 200, halo: 300, pirate: 250 };
+                btn.textContent = `🪙 ${costs[hat] || 250} Unlock`;
+                btn.disabled = false;
+            }
+        });
+    }
+
+    buyItem(type, cost) {
+        if ((this.progress.coins || 0) < cost) {
+            soundManager.playWrong();
+            alert('Not enough coins! Clear more stages or win challenges to earn coins 🪙');
+            return;
+        }
+
+        this.progress.coins -= cost;
+        this.inventory[type] = (this.inventory[type] || 0) + 1;
+        this.saveProgress();
+        this.updatePowerupBadges();
+        this.updateShopUI();
+        soundManager.playPowerup();
+        this.fireConfetti(30);
+    }
+
+    applyTheme(themeId, save = true) {
+        document.body.dataset.theme = themeId;
+        this.progress.equippedTheme = themeId;
+        if (save) {
+            this.saveProgress();
+            this.updateShopUI();
+            soundManager.playClick();
+        }
+    }
+
+    buyOrEquipTheme(themeId, cost) {
+        const unlocked = this.progress.unlockedThemes || ['cyberpunk'];
+        if (unlocked.includes(themeId)) {
+            this.applyTheme(themeId);
+            return;
+        }
+
+        if ((this.progress.coins || 0) < cost) {
+            soundManager.playWrong();
+            alert('Not enough coins to unlock this theme! 🪙');
+            return;
+        }
+
+        this.progress.coins -= cost;
+        unlocked.push(themeId);
+        this.progress.unlockedThemes = unlocked;
+        this.applyTheme(themeId);
+        soundManager.playVictory();
+        this.fireConfetti(50);
+    }
+
+    equipHat(hatId, save = true) {
+        this.progress.equippedHat = hatId;
+        this.renderMascotHats();
+        if (save) {
+            this.saveProgress();
+            this.updateShopUI();
+            soundManager.playClick();
+        }
+    }
+
+    buyOrEquipHat(hatId, cost) {
+        const unlocked = this.progress.unlockedHats || ['none'];
+        if (unlocked.includes(hatId)) {
+            this.equipHat(hatId);
+            return;
+        }
+
+        if ((this.progress.coins || 0) < cost) {
+            soundManager.playWrong();
+            alert('Not enough coins to unlock this wardrobe accessory! 🪙');
+            return;
+        }
+
+        this.progress.coins -= cost;
+        unlocked.push(hatId);
+        this.progress.unlockedHats = unlocked;
+        this.equipHat(hatId);
+        soundManager.playVictory();
+        this.fireConfetti(50);
+    }
+
+    renderMascotHats() {
+        const hatId = this.progress.equippedHat || 'none';
+        ['mascotLeft', 'mascotRight'].forEach(mId => {
+            const mascotEl = document.getElementById(mId);
+            if (!mascotEl) return;
+
+            let hatContainer = mascotEl.querySelector('.mascot-equipped-hat');
+            if (!hatContainer) {
+                hatContainer = document.createElement('div');
+                hatContainer.className = 'mascot-equipped-hat';
+                mascotEl.appendChild(hatContainer);
+            }
+
+            hatContainer.style.position = 'absolute';
+            hatContainer.style.top = '-20px';
+            hatContainer.style.left = '50%';
+            hatContainer.style.transform = 'translateX(-50%)';
+            hatContainer.style.fontSize = '2.2rem';
+            hatContainer.style.pointerEvents = 'none';
+            hatContainer.style.zIndex = '15';
+            hatContainer.style.filter = 'drop-shadow(0 4px 8px rgba(0,0,0,0.4))';
+
+            const emojis = {
+                none: '',
+                wizard: '🧙‍♂️',
+                crown: '👑',
+                goggles: '🥽',
+                halo: '😇',
+                pirate: '🏴‍☠️'
+            };
+
+            hatContainer.textContent = emojis[hatId] || '';
+        });
+    }
+
+    // ==========================================
+    // 8. 📜 SHAREABLE DIGITAL CERTIFICATE
+    // ==========================================
+    openCertificate() {
+        soundManager.playClick();
+        this.closeAllModals();
+        if (this.modalCertificate) this.modalCertificate.classList.add('active');
+        this.renderCertificateCanvas();
+    }
+
+    renderCertificateCanvas() {
+        const canvas = document.getElementById('certificateCanvas');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const nameInput = document.getElementById('certPlayerNameInput');
+        const playerName = (nameInput && nameInput.value.trim()) || 'Punnawit Janthamrong';
+
+        const w = 1200;
+        const h = 800;
+        canvas.width = w;
+        canvas.height = h;
+
+        // 1. Deep Obsidian & Midnight Navy Radial Gradient Background
+        const bgGrad = ctx.createRadialGradient(w / 2, h / 2, 80, w / 2, h / 2, 680);
+        bgGrad.addColorStop(0, '#10172a');
+        bgGrad.addColorStop(0.55, '#0b1120');
+        bgGrad.addColorStop(1, '#030712');
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, w, h);
+
+        // 2. Faint Golden Guilloche Security Pattern / Geometric Rings
+        ctx.save();
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.035)';
+        ctx.lineWidth = 1.2;
+        for (let r = 80; r <= 560; r += 45) {
+            ctx.beginPath();
+            ctx.arc(w / 2, h / 2, r, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+
+        // Diamond Lattice Watermark
+        ctx.strokeStyle = 'rgba(56, 189, 248, 0.025)';
+        ctx.lineWidth = 1;
+        const step = 40;
+        for (let x = 60; x < w - 60; x += step) {
+            ctx.beginPath();
+            ctx.moveTo(x, 60);
+            ctx.lineTo(x + (h - 120), h - 60);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(x, 60);
+            ctx.lineTo(x - (h - 120), h - 60);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        // 3. Triple Royal Gold Luxury Filigree Borders
+        // Outer Heavy Gold Border
+        const borderGrad = ctx.createLinearGradient(0, 0, w, h);
+        borderGrad.addColorStop(0, '#fef08a');
+        borderGrad.addColorStop(0.25, '#d97706');
+        borderGrad.addColorStop(0.5, '#fbbf24');
+        borderGrad.addColorStop(0.75, '#b45309');
+        borderGrad.addColorStop(1, '#fde68a');
+
+        ctx.strokeStyle = borderGrad;
+        ctx.lineWidth = 6;
+        ctx.strokeRect(26, 26, w - 52, h - 52);
+
+        // Middle Thin Pinstripe
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.45)';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(36, 36, w - 72, h - 72);
+
+        // Inner Dashed Gold Border
+        ctx.save();
+        ctx.setLineDash([8, 6]);
+        ctx.strokeStyle = 'rgba(245, 158, 11, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(48, 48, w - 96, h - 96);
+        ctx.restore();
+
+        // 4. Ornate Corner Fleurons & Rosettes
+        const drawCornerFleuron = (cx, cy, angle) => {
+            ctx.save();
+            ctx.translate(cx, cy);
+            ctx.rotate((angle * Math.PI) / 180);
+
+            // Bracket Lines
+            ctx.strokeStyle = '#fbbf24';
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            ctx.moveTo(0, 32);
+            ctx.lineTo(0, 0);
+            ctx.lineTo(32, 0);
+            ctx.stroke();
+
+            // Center rosette
+            ctx.fillStyle = '#fef08a';
+            ctx.beginPath();
+            ctx.arc(8, 8, 4, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Diamond accent
+            ctx.fillStyle = '#f59e0b';
+            ctx.beginPath();
+            ctx.moveTo(8, 0);
+            ctx.lineTo(12, 8);
+            ctx.lineTo(8, 16);
+            ctx.lineTo(4, 8);
+            ctx.closePath();
+            ctx.fill();
+
+            ctx.restore();
+        };
+
+        drawCornerFleuron(56, 56, 0);
+        drawCornerFleuron(w - 56, 56, 90);
+        drawCornerFleuron(w - 56, h - 56, 180);
+        drawCornerFleuron(56, h - 56, 270);
+
+        // 5. Institutional Crest & University Header
+        ctx.textAlign = 'center';
+        
+        // Stars & Crown Crest
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = '22px Outfit, sans-serif';
+        ctx.fillText('✦  ⭐  👑  ⭐  ✦', w / 2, 82);
+
+        // University Name
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '800 15px Inter, sans-serif';
+        ctx.letterSpacing = '5px';
+        ctx.fillText('CHANDRAKASEM RAJABHAT UNIVERSITY', w / 2, 112);
+
+        // Faculty Name
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '600 12.5px Inter, sans-serif';
+        ctx.letterSpacing = '2px';
+        ctx.fillText('FACULTY OF MULTIMEDIA AND E-SPORTS • ARCADE ACADEMIC BOARD', w / 2, 134);
+
+        // 6. Main Certificate Category Title
+        const titleGrad = ctx.createLinearGradient(w / 2 - 250, 0, w / 2 + 250, 0);
+        titleGrad.addColorStop(0, '#fde68a');
+        titleGrad.addColorStop(0.5, '#fbbf24');
+        titleGrad.addColorStop(1, '#f59e0b');
+
+        ctx.fillStyle = titleGrad;
+        ctx.font = '900 34px Outfit, sans-serif';
+        ctx.letterSpacing = '1px';
+        ctx.shadowColor = 'rgba(245, 158, 11, 0.45)';
+        ctx.shadowBlur = 12;
+        ctx.fillText('CERTIFICATE OF MASTERY & PROFICIENCY', w / 2, 182);
+        ctx.shadowBlur = 0;
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '700 13.5px Inter, sans-serif';
+        ctx.letterSpacing = '6px';
+        ctx.fillText('IN ENGLISH LANGUAGE & ADVANCED TRIVIA', w / 2, 208);
+
+        // Ornate Center Divider (─── ◆ ───)
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.5)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(w / 2 - 240, 226);
+        ctx.lineTo(w / 2 - 24, 226);
+        ctx.moveTo(w / 2 + 24, 226);
+        ctx.lineTo(w / 2 + 240, 226);
+        ctx.stroke();
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.moveTo(w / 2, 220);
+        ctx.lineTo(w / 2 + 8, 226);
+        ctx.lineTo(w / 2, 232);
+        ctx.lineTo(w / 2 - 8, 226);
+        ctx.closePath();
+        ctx.fill();
+
+        // 7. Citation Intro
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = 'italic 500 18px Inter, sans-serif';
+        ctx.letterSpacing = '0px';
+        ctx.fillText('This official credential is proudly awarded to', w / 2, 268);
+
+        // 8. Recipient Name with Glow & Metallic Gradient
+        const nameGrad = ctx.createLinearGradient(w / 2 - 200, 0, w / 2 + 200, 0);
+        nameGrad.addColorStop(0, '#67e8f9');
+        nameGrad.addColorStop(0.5, '#ffffff');
+        nameGrad.addColorStop(1, '#67e8f9');
+
+        ctx.fillStyle = nameGrad;
+        ctx.font = '900 44px Outfit, sans-serif';
+        ctx.shadowColor = 'rgba(6, 182, 212, 0.6)';
+        ctx.shadowBlur = 18;
+        ctx.fillText(playerName, w / 2, 330);
+        ctx.shadowBlur = 0;
+
+        // Name Underline with Golden Wing Ends
+        ctx.strokeStyle = 'rgba(251, 191, 36, 0.6)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(w / 2 - 180, 348);
+        ctx.lineTo(w / 2 + 180, 348);
+        ctx.stroke();
+
+        // 9. Honor Citation Statement
+        ctx.fillStyle = '#cbd5e1';
+        ctx.font = '500 16px Inter, sans-serif';
+        ctx.fillText('for demonstrating outstanding grammatical precision, expansive vocabulary comprehension,', w / 2, 388);
+        ctx.fillText('and conquering multiple interactive quests with exemplary speed, focus, and deductive reasoning.', w / 2, 412);
+
+        // 10. 3 Luxury Metric Badges (EXP, Rank, Mastery)
+        let totalCompleted = 0;
+        ['basic', 'intermediate', 'advanced'].forEach(lvl => {
+            totalCompleted += (this.progress.completed[lvl] || []).length;
+        });
+        const totalScore = this.progress.totalScore || 0;
+
+        let rankTitle = 'Novice Explorer 🌱';
+        if (totalScore >= 3000) rankTitle = 'Grand Archmage 🌟';
+        else if (totalScore >= 1800) rankTitle = 'Master Lexicon ⚔️';
+        else if (totalScore >= 600) rankTitle = 'Grammar Knight 🛡️';
+
+        const badgeY = 448;
+        const badgeW = 260;
+        const badgeH = 68;
+        const badgeGap = 24;
+        const startX = w / 2 - (badgeW * 1.5 + badgeGap);
+
+        const stats = [
+            { icon: '🏆', label: 'TOTAL EXP SCORE', val: `${totalScore} PTS`, color: '#fbbf24' },
+            { icon: '⭐', label: 'RANK ACHIEVEMENT', val: rankTitle, color: '#38bdf8' },
+            { icon: '🎯', label: 'QUESTS MASTERED', val: `${totalCompleted} / 33 STAGES`, color: '#34d399' }
+        ];
+
+        stats.forEach((st, i) => {
+            const bx = startX + i * (badgeW + badgeGap);
+            
+            // Badge Glass Background
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
+            ctx.lineWidth = 1.2;
+            
+            ctx.beginPath();
+            ctx.roundRect(bx, badgeY, badgeW, badgeH, 12);
+            ctx.fill();
+            ctx.stroke();
+
+            // Badge Label
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '700 11px Inter, sans-serif';
+            ctx.letterSpacing = '1.5px';
+            ctx.fillText(st.label, bx + badgeW / 2, badgeY + 24);
+
+            // Badge Value
+            ctx.fillStyle = st.color;
+            ctx.font = '800 18px Outfit, sans-serif';
+            ctx.letterSpacing = '0px';
+            ctx.fillText(st.val, bx + badgeW / 2, badgeY + 52);
+        });
+
+        // 11. Bottom Official Verification, Embossed Gold Seal & Signature
+        const dateStr = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const randomId = Math.floor(100000 + (totalScore * 7) % 900000);
+
+        // Left Column: Verification & Date
+        ctx.textAlign = 'left';
+        ctx.fillStyle = '#64748b';
+        ctx.font = '700 11px Inter, sans-serif';
+        ctx.letterSpacing = '1px';
+        ctx.fillText('VERIFICATION TOKEN', 75, 660);
+
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = '800 13px monospace';
+        ctx.fillText(`EQ-CRU-2026-${randomId}`, 75, 680);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '500 12.5px Inter, sans-serif';
+        ctx.fillText(`Date Issued: ${dateStr}`, 75, 706);
+        ctx.fillText('Issuing Authority: CRU Language Guild', 75, 726);
+
+        // Center Column: 3D Embossed Royal Gold Seal
+        const sealX = w / 2;
+        const sealY = 675;
+
+        // Crimson Ribbon Tails
+        ctx.fillStyle = '#b91c1c';
+        ctx.beginPath();
+        ctx.moveTo(sealX - 22, sealY + 20);
+        ctx.lineTo(sealX - 34, sealY + 70);
+        ctx.lineTo(sealX - 18, sealY + 58);
+        ctx.lineTo(sealX - 4, sealY + 70);
+        ctx.lineTo(sealX - 10, sealY + 20);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(sealX + 10, sealY + 20);
+        ctx.lineTo(sealX + 4, sealY + 70);
+        ctx.lineTo(sealX + 18, sealY + 58);
+        ctx.lineTo(sealX + 34, sealY + 70);
+        ctx.lineTo(sealX + 22, sealY + 20);
+        ctx.closePath();
+        ctx.fill();
+
+        // Outer Scalloped Gold Medal Rosette
+        const rosettePoints = 32;
+        const outerR = 48;
+        const innerR = 42;
+        ctx.fillStyle = borderGrad;
+        ctx.beginPath();
+        for (let p = 0; p < rosettePoints * 2; p++) {
+            const r = p % 2 === 0 ? outerR : innerR;
+            const a = (p * Math.PI) / rosettePoints;
+            const px = sealX + Math.cos(a) * r;
+            const py = sealY + Math.sin(a) * r;
+            if (p === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+        }
+        ctx.closePath();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
+        ctx.shadowBlur = 12;
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Inner Gold Rings
+        ctx.fillStyle = '#78350f';
+        ctx.beginPath();
+        ctx.arc(sealX, sealY, 36, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.beginPath();
+        ctx.arc(sealX, sealY, 32, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.arc(sealX, sealY, 28, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#fbbf24';
+        ctx.font = '22px Outfit, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('👑', sealX, sealY + 7);
+
+        // Right Column: Academic Signature Line
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#64748b';
+        ctx.font = '700 11px Inter, sans-serif';
+        ctx.letterSpacing = '1px';
+        ctx.fillText('AUTHORIZED SIGNATURE', w - 75, 642);
+
+        // Stylized Calligraphic Signature Representation
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.moveTo(w - 220, 672);
+        ctx.bezierCurveTo(w - 200, 650, w - 175, 685, w - 150, 660);
+        ctx.bezierCurveTo(w - 130, 640, w - 110, 680, w - 80, 665);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(w - 240, 688);
+        ctx.lineTo(w - 75, 688);
+        ctx.stroke();
+
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '800 13px Inter, sans-serif';
+        ctx.fillText('Punnawit Janthamrong', w - 75, 708);
+
+        ctx.fillStyle = '#94a3b8';
+        ctx.font = '500 11.5px Inter, sans-serif';
+        ctx.fillText('Chief Academic Assessor & Guildmaster', w - 75, 726);
+    }
+
+    downloadCertificate() {
+        soundManager.playClick();
+        const canvas = document.getElementById('certificateCanvas');
+        if (!canvas) return;
+        const link = document.createElement('a');
+        link.download = `EnglishQuest_Master_Certificate_${Date.now()}.png`;
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+        soundManager.playFirework();
+        this.fireConfetti(70);
+    }
+
+    printCertificate() {
+        soundManager.playClick();
+        window.print();
+    }
+
+    // ==========================================
+    // 9. 👥 2-PLAYER LOCAL DUEL MODE (SPLIT-SCREEN)
+    // ==========================================
+    startDuelMode() {
+        soundManager.playClick();
+        this.cleanupTimers();
+        this.duelScoreP1 = 0;
+        this.duelScoreP2 = 0;
+        this.duelP1Locked = false;
+        this.duelP2Locked = false;
+
+        const p1ScoreEl = document.getElementById('duelScoreP1');
+        const p2ScoreEl = document.getElementById('duelScoreP2');
+        if (p1ScoreEl) p1ScoreEl.textContent = '0';
+        if (p2ScoreEl) p2ScoreEl.textContent = '0';
+
+        this.switchScreen('duel');
+        this.nextDuelRound();
+    }
+
+    nextDuelRound() {
+        this.duelP1Locked = false;
+        this.duelP2Locked = false;
+
+        const zoneP1 = document.getElementById('duelZoneP1');
+        const zoneP2 = document.getElementById('duelZoneP2');
+        if (zoneP1) zoneP1.classList.remove('locked-out');
+        if (zoneP2) zoneP2.classList.remove('locked-out');
+
+        const notice = document.getElementById('duelBuzzerNotice');
+        if (notice) notice.textContent = '';
+
+        // Pick random question with 4 options
+        this.duelCurrentQuestion = getRandomQuestionWithChoices();
+
+        const typeTag = document.getElementById('duelQuestionType');
+        const promptEl = document.getElementById('duelQuestionPrompt');
+        const displayEl = document.getElementById('duelQuestionDisplay');
+
+        if (typeTag) typeTag.textContent = (this.duelCurrentQuestion.type || 'DUEL').toUpperCase().replace(/_/g, ' ');
+        if (promptEl) promptEl.textContent = this.duelCurrentQuestion.prompt;
+        if (displayEl) displayEl.textContent = this.duelCurrentQuestion.display || '⚡ BE QUICK!';
+
+        this.renderDuelOptions();
+    }
+
+    renderDuelOptions() {
+        const optsP1 = document.getElementById('duelOptionsP1');
+        const optsP2 = document.getElementById('duelOptionsP2');
+        if (!optsP1 || !optsP2 || !this.duelCurrentQuestion) return;
+
+        const keyHintsP1 = ['[A]', '[S]', '[D]', '[F]'];
+        const keyHintsP2 = ['[H]', '[J]', '[K]', '[L]'];
+
+        optsP1.innerHTML = this.duelCurrentQuestion.choices.map((choice, idx) => `
+            <button class="duel-opt-btn" onclick="game.handleDuelAnswer(1, ${idx})">
+                <span>${choice}</span>
+                <span class="duel-key-hint">${keyHintsP1[idx]}</span>
+            </button>
+        `).join('');
+
+        optsP2.innerHTML = this.duelCurrentQuestion.choices.map((choice, idx) => `
+            <button class="duel-opt-btn" onclick="game.handleDuelAnswer(2, ${idx})">
+                <span>${choice}</span>
+                <span class="duel-key-hint">${keyHintsP2[idx]}</span>
+            </button>
+        `).join('');
+    }
+
+    handleDuelAnswer(playerNum, choiceIndex) {
+        if (!this.duelCurrentQuestion) return;
+        if (playerNum === 1 && this.duelP1Locked) return;
+        if (playerNum === 2 && this.duelP2Locked) return;
+
+        const chosen = this.duelCurrentQuestion.choices[choiceIndex];
+        const isCorrect = (chosen === this.duelCurrentQuestion.correctAnswer);
+        const notice = document.getElementById('duelBuzzerNotice');
+
+        if (isCorrect) {
+            soundManager.playCorrect();
+            soundManager.playFirework();
+            if (playerNum === 1) {
+                this.duelScoreP1 += 1;
+                const p1ScoreEl = document.getElementById('duelScoreP1');
+                if (p1ScoreEl) p1ScoreEl.textContent = this.duelScoreP1;
+                if (notice) {
+                    notice.style.color = '#38bdf8';
+                    notice.textContent = `⚡ PLAYER 1 scored! (+1 Point)`;
+                }
+            } else {
+                this.duelScoreP2 += 1;
+                const p2ScoreEl = document.getElementById('duelScoreP2');
+                if (p2ScoreEl) p2ScoreEl.textContent = this.duelScoreP2;
+                if (notice) {
+                    notice.style.color = '#f43f5e';
+                    notice.textContent = `🔥 PLAYER 2 scored! (+1 Point)`;
+                }
+            }
+
+            // Check match win
+            if (this.duelScoreP1 >= 5 || this.duelScoreP2 >= 5) {
+                this.endDuelMatch(this.duelScoreP1 >= 5 ? 1 : 2);
+                return;
+            }
+
+            // Next round after 1 second
+            this.duelRoundTimer = setTimeout(() => this.nextDuelRound(), 1000);
+        } else {
+            // Wrong answer: 2-second lock out!
+            soundManager.playDuelBuzz();
+            if (playerNum === 1) {
+                this.duelP1Locked = true;
+                const zone = document.getElementById('duelZoneP1');
+                if (zone) zone.classList.add('locked-out');
+                if (notice) {
+                    notice.style.color = '#f43f5e';
+                    notice.textContent = `⚠️ Player 1 Locked Out for 2s!`;
+                }
+                setTimeout(() => {
+                    this.duelP1Locked = false;
+                    if (zone) zone.classList.remove('locked-out');
+                }, 2000);
+            } else {
+                this.duelP2Locked = true;
+                const zone = document.getElementById('duelZoneP2');
+                if (zone) zone.classList.add('locked-out');
+                if (notice) {
+                    notice.style.color = '#f43f5e';
+                    notice.textContent = `⚠️ Player 2 Locked Out for 2s!`;
+                }
+                setTimeout(() => {
+                    this.duelP2Locked = false;
+                    if (zone) zone.classList.remove('locked-out');
+                }, 2000);
+            }
+        }
+    }
+
+    endDuelMatch(winnerNum) {
+        soundManager.playVictory();
+        this.fireConfetti(120);
+
+        const iconEl = document.getElementById('duelWinnerIcon');
+        const titleEl = document.getElementById('duelWinnerTitle');
+        const subEl = document.getElementById('duelWinnerSubtitle');
+        const p1Sum = document.getElementById('duelSummaryP1');
+        const p2Sum = document.getElementById('duelSummaryP2');
+
+        if (p1Sum) p1Sum.textContent = this.duelScoreP1;
+        if (p2Sum) p2Sum.textContent = this.duelScoreP2;
+
+        if (winnerNum === 1) {
+            if (iconEl) iconEl.textContent = '⚡';
+            if (titleEl) { titleEl.style.color = '#38bdf8'; titleEl.textContent = 'PLAYER 1 WINS!'; }
+            if (subEl) subEl.textContent = 'Lightning fast! Player 1 reached 5 points first.';
+            this.progress.highScores.duelWinsP1 = (this.progress.highScores.duelWinsP1 || 0) + 1;
+        } else {
+            if (iconEl) iconEl.textContent = '🔥';
+            if (titleEl) { titleEl.style.color = '#f43f5e'; titleEl.textContent = 'PLAYER 2 WINS!'; }
+            if (subEl) subEl.textContent = 'Fierce reflexes! Player 2 reached 5 points first.';
+            this.progress.highScores.duelWinsP2 = (this.progress.highScores.duelWinsP2 || 0) + 1;
+        }
+
+        this.addCoins(50); // Winner coin reward
+        this.saveProgress();
+        this.closeAllModals();
+        if (this.modalDuelVictory) this.modalDuelVictory.classList.add('active');
+    }
+
+    // ==========================================
+    // 10. ⏱️ TIME ATTACK MODE (60s SPEEDRUN)
+    // ==========================================
+    startTimeAttack() {
+        soundManager.playClick();
+        this.cleanupTimers();
+        this.taTimeRemaining = 60.0;
+        this.taScore = 0;
+        this.taCombo = 0;
+        this.taSolved = 0;
+
+        this.switchScreen('timeattack');
+        this.nextTaQuestion();
+
+        // 100ms interval timer loop
+        this.taTimer = setInterval(() => {
+            this.taTimeRemaining = Math.max(0, this.taTimeRemaining - 0.1);
+            const secEl = document.getElementById('timeAttackSeconds');
+            const fillEl = document.getElementById('timeAttackFill');
+            const pillEl = document.getElementById('timeAttackPill');
+
+            if (secEl) secEl.textContent = `${this.taTimeRemaining.toFixed(1)}s`;
+            if (fillEl) fillEl.style.width = `${Math.min(100, (this.taTimeRemaining / 60) * 100)}%`;
+
+            if (this.taTimeRemaining <= 10) {
+                if (pillEl) pillEl.classList.add('urgent');
+                if (Math.floor(this.taTimeRemaining * 10) % 10 === 0) soundManager.playTick();
+            } else {
+                if (pillEl) pillEl.classList.remove('urgent');
+            }
+
+            if (this.taTimeRemaining <= 0) {
+                this.endTimeAttack();
+            }
+        }, 100);
+    }
+
+    nextTaQuestion() {
+        this.taCurrentQuestion = getRandomQuestionWithChoices();
+        const typeEl = document.getElementById('taTypeTag');
+        const promptEl = document.getElementById('taPrompt');
+        const displayEl = document.getElementById('taDisplaySlot');
+        const grid = document.getElementById('taChoicesGrid');
+
+        if (typeEl) typeEl.textContent = (this.taCurrentQuestion.type || 'SPEED CHALLENGE').toUpperCase().replace(/_/g, ' ');
+        if (promptEl) promptEl.textContent = this.taCurrentQuestion.prompt;
+        if (displayEl) displayEl.textContent = this.taCurrentQuestion.display || '_ _ _ _';
+
+        if (grid) {
+            grid.innerHTML = (this.taCurrentQuestion && this.taCurrentQuestion.choices) ? this.taCurrentQuestion.choices.map((choice, idx) => `
+                <button class="ta-choice-btn" onclick="game.handleTaAnswer(${idx})">
+                    ${choice}
+                </button>
+            `).join('') : '';
+        }
+    }
+
+    handleTaAnswer(choiceIndex) {
+        if (!this.taCurrentQuestion || this.taTimeRemaining <= 0) return;
+        const chosen = this.taCurrentQuestion.choices[choiceIndex];
+        const isCorrect = (chosen === this.taCurrentQuestion.correctAnswer);
+
+        if (isCorrect) {
+            this.taSolved += 1;
+            this.taCombo += 1;
+            this.taTimeRemaining = Math.min(90, this.taTimeRemaining + 3.0); // +3s bonus!
+            const earned = 100 + (this.taCombo * 20);
+            this.taScore += earned;
+
+            soundManager.playCorrect();
+            if (this.taCombo > 1) soundManager.playCombo(this.taCombo);
+
+            // Show +3s bonus notice
+            const notice = document.getElementById('taBonusNotice');
+            if (notice) {
+                notice.classList.add('show');
+                setTimeout(() => notice.classList.remove('show'), 800);
+            }
+
+            const scoreDisp = document.getElementById('taScoreDisplay');
+            const comboDisp = document.getElementById('taComboDisplay');
+            if (scoreDisp) scoreDisp.textContent = `Score: ${this.taScore}`;
+            if (comboDisp) comboDisp.textContent = `🔥 ${this.taCombo}x`;
+
+            this.nextTaQuestion();
+        } else {
+            this.taCombo = 0;
+            this.taTimeRemaining = Math.max(0, this.taTimeRemaining - 2.0); // -2s penalty
+            soundManager.playWrong();
+            const comboDisp = document.getElementById('taComboDisplay');
+            if (comboDisp) comboDisp.textContent = `🔥 0x`;
+            this.nextTaQuestion();
+        }
+    }
+
+    endTimeAttack() {
+        this.cleanupTimers();
+        soundManager.playVictory();
+        this.fireConfetti(80);
+
+        const coinEarned = Math.floor(this.taScore / 10);
+        this.addCoins(coinEarned);
+
+        if (this.taScore > (this.progress.highScores.timeAttack || 0)) {
+            this.progress.highScores.timeAttack = this.taScore;
+        }
+        this.saveProgress();
+
+        const scoreEl = document.getElementById('taSummaryScore');
+        const solvedEl = document.getElementById('taSummarySolved');
+        const coinsEl = document.getElementById('taSummaryCoins');
+
+        if (scoreEl) scoreEl.textContent = this.taScore;
+        if (solvedEl) solvedEl.textContent = `${this.taSolved} Words`;
+        if (coinsEl) coinsEl.textContent = `+${coinEarned} 🪙`;
+
+        this.closeAllModals();
+        if (this.modalTimeAttackSummary) this.modalTimeAttackSummary.classList.add('active');
+    }
+
+    // ==========================================
+    // 11. ♾️ ENDLESS SURVIVAL MODE
+    // ==========================================
+    startEndless() {
+        soundManager.playClick();
+        this.cleanupTimers();
+        this.endlessWave = 1;
+        this.endlessScore = 0;
+        this.endlessLives = 3;
+
+        this.updateEndlessHearts();
+        this.switchScreen('endless');
+        this.nextEndlessWave();
+    }
+
+    updateEndlessHearts() {
+        for (let i = 1; i <= 3; i++) {
+            const h = document.getElementById(`endlessHeart${i}`);
+            if (h) {
+                if (i <= this.endlessLives) h.classList.remove('lost');
+                else h.classList.add('lost');
+            }
+        }
+    }
+
+    nextEndlessWave() {
+        // Difficulty tier scales with wave
+        let tier = 'basic';
+        if (this.endlessWave >= 10) tier = 'advanced';
+        else if (this.endlessWave >= 5) tier = 'intermediate';
+
+        this.endlessCurrentQuestion = getRandomQuestionWithChoices(tier);
+
+        const waveLabel = document.getElementById('endlessWaveLabel');
+        const scoreDisp = document.getElementById('endlessScoreDisplay');
+        const typeEl = document.getElementById('endlessTypeTag');
+        const promptEl = document.getElementById('endlessPrompt');
+        const displayEl = document.getElementById('endlessDisplaySlot');
+        const grid = document.getElementById('endlessChoicesGrid');
+
+        if (waveLabel) waveLabel.textContent = `Wave ${this.endlessWave} ♾️`;
+        if (scoreDisp) scoreDisp.textContent = `Score: ${this.endlessScore}`;
+        if (typeEl) typeEl.textContent = `WAVE ${this.endlessWave} • ${tier.toUpperCase()}`;
+        if (promptEl) promptEl.textContent = this.endlessCurrentQuestion.prompt;
+        if (displayEl) displayEl.textContent = this.endlessCurrentQuestion.display || '_ _ _ _';
+
+        if (grid) {
+            grid.innerHTML = this.endlessCurrentQuestion.choices.map((choice, idx) => `
+                <button class="ta-choice-btn" onclick="game.handleEndlessAnswer(${idx})">
+                    ${choice}
+                </button>
+            `).join('');
+        }
+    }
+
+    handleEndlessAnswer(choiceIndex) {
+        if (!this.endlessCurrentQuestion) return;
+        const chosen = this.endlessCurrentQuestion.choices[choiceIndex];
+        const isCorrect = (chosen === this.endlessCurrentQuestion.correctAnswer);
+
+        if (isCorrect) {
+            this.endlessWave += 1;
+            this.endlessScore += 150;
+            this.addCoins(15);
+            soundManager.playCorrect();
+
+            // Every 5 waves: restore 1 heart + gift random powerup!
+            if (this.endlessWave % 5 === 0) {
+                this.endlessLives = Math.min(3, this.endlessLives + 1);
+                this.updateEndlessHearts();
+                this.inventory.reveal += 1;
+                this.updatePowerupBadges();
+                soundManager.playPowerup();
+                this.fireConfetti(40);
+            }
+
+            this.nextEndlessWave();
+        } else {
+            this.endlessLives -= 1;
+            this.updateEndlessHearts();
+            soundManager.playWrong();
+
+            if (this.endlessLives <= 0) {
+                this.endEndless();
+            } else {
+                this.nextEndlessWave();
+            }
+        }
+    }
+
+    endEndless() {
+        if (this.endlessWave > (this.progress.highScores.endless || 0)) {
+            this.progress.highScores.endless = this.endlessWave;
+        }
+        this.saveProgress();
+        alert(`♾️ ENDLESS SURVIVAL COMPLETE!\n\nYou survived up to Wave ${this.endlessWave} with a total score of ${this.endlessScore} pts!`);
+        this.goToHome();
+    }
+
+    // ==========================================
+    // 12. 🐉 BOSS BATTLE MODE (LEXICON DRAGON)
+    // ==========================================
+    startBossBattle() {
+        soundManager.playClick();
+        this.cleanupTimers();
+        this.bossMaxHp = 1000;
+        this.bossHp = 1000;
+        this.bossLives = 3;
+
+        this.updateBossHearts();
+        this.switchScreen('boss');
+        this.nextBossTurn();
+    }
+
+    updateBossHearts() {
+        for (let i = 1; i <= 3; i++) {
+            const h = document.getElementById(`bossHeart${i}`);
+            if (h) {
+                if (i <= this.bossLives) h.classList.remove('lost');
+                else h.classList.add('lost');
+            }
+        }
+    }
+
+    updateBossHpBar() {
+        const hpText = document.getElementById('bossHpText');
+        const hpFill = document.getElementById('bossHpFill');
+        if (hpText) hpText.textContent = `${Math.max(0, this.bossHp)} / ${this.bossMaxHp}`;
+        if (hpFill) hpFill.style.width = `${Math.max(0, (this.bossHp / this.bossMaxHp) * 100)}%`;
+    }
+
+    nextBossTurn() {
+        if (this.bossTurnTimer) clearInterval(this.bossTurnTimer);
+        this.bossTurnSeconds = 15;
+
+        this.bossCurrentQuestion = getRandomQuestionWithChoices('advanced');
+
+        const secEl = document.getElementById('bossTurnSeconds');
+        if (secEl) secEl.textContent = `${this.bossTurnSeconds}s`;
+
+        const tagEl = document.getElementById('bossQuestionTag');
+        const promptEl = document.getElementById('bossPrompt');
+        const displayEl = document.getElementById('bossDisplaySlot');
+        const grid = document.getElementById('bossChoicesGrid');
+
+        if (tagEl) tagEl.textContent = '⚔️ DRAGON TRIAL';
+        if (promptEl) promptEl.textContent = this.bossCurrentQuestion.prompt;
+        if (displayEl) displayEl.textContent = this.bossCurrentQuestion.display || '⚔️ CAST SPELL';
+
+        if (grid) {
+            grid.innerHTML = this.bossCurrentQuestion.choices.map((choice, idx) => `
+                <button class="boss-attack-btn" onclick="game.handleBossAttack(${idx})">
+                    ⚡ CAST: ${choice}
+                </button>
+            `).join('');
+        }
+
+        this.updateBossHpBar();
+
+        // 1-second turn timer
+        this.bossTurnTimer = setInterval(() => {
+            this.bossTurnSeconds -= 1;
+            const sec = document.getElementById('bossTurnSeconds');
+            if (sec) sec.textContent = `${this.bossTurnSeconds}s`;
+
+            if (this.bossTurnSeconds <= 0) {
+                clearInterval(this.bossTurnTimer);
+                this.bossAttackPlayer('⌛ Time ran out! The Dragon unleashed a fiery breath!');
+            }
+        }, 1000);
+    }
+
+    handleBossAttack(choiceIndex) {
+        if (!this.bossCurrentQuestion || this.bossHp <= 0) return;
+        if (this.bossTurnTimer) clearInterval(this.bossTurnTimer);
+
+        const chosen = this.bossCurrentQuestion.choices[choiceIndex];
+        const isCorrect = (chosen === this.bossCurrentQuestion.correctAnswer);
+
+        if (isCorrect) {
+            const damage = 250;
+            this.bossHp -= damage;
+            this.updateBossHpBar();
+            soundManager.playBossDamage();
+            soundManager.playFirework();
+            this.fireConfetti(40);
+
+            // Boss Visual Shake
+            const visual = document.getElementById('bossVisual');
+            if (visual) {
+                visual.style.transform = 'scale(0.9) rotate(-6deg)';
+                setTimeout(() => visual.style.transform = 'scale(1) rotate(0deg)', 400);
+            }
+
+            if (this.bossHp <= 0) {
+                this.endBossBattle(true);
+            } else {
+                setTimeout(() => this.nextBossTurn(), 1200);
+            }
+        } else {
+            this.bossAttackPlayer('❌ Spell fizzled! The Dragon retaliated with a tail swipe!');
+        }
+    }
+
+    bossAttackPlayer(msg) {
+        soundManager.playBossRoar();
+        this.bossLives -= 1;
+        this.updateBossHearts();
+
+        alert(msg);
+
+        if (this.bossLives <= 0) {
+            this.endBossBattle(false);
+        } else {
+            setTimeout(() => this.nextBossTurn(), 800);
+        }
+    }
+
+    endBossBattle(isWin) {
+        this.cleanupTimers();
+        if (isWin) {
+            soundManager.playVictory();
+            this.launchFireworksBurst(10);
+            this.fireConfetti(150);
+            this.addCoins(300);
+            this.progress.highScores.bossDefeated = (this.progress.highScores.bossDefeated || 0) + 1;
+            this.progress.totalScore += 1000;
+            this.saveProgress();
+            this.closeAllModals();
+            if (this.modalBossVictory) this.modalBossVictory.classList.add('active');
+        } else {
+            soundManager.playGameOver();
+            this.closeAllModals();
+            if (this.modalGameOver) {
+                const title = this.modalGameOver.querySelector('.game-over-title');
+                if (title) title.innerText = '🐉 Defeated by Dragon!';
+                this.modalGameOver.classList.add('active');
+            }
+        }
+    }
 }
 
 // Instantiate global game engine
 const game = new EnglishQuizGame();
+if (typeof window !== 'undefined') {
+    window.game = game;
+    window.EnglishQuizGame = EnglishQuizGame;
+}
+
+
+
+

@@ -440,6 +440,137 @@ const QUESTION_BANK = {
     }
 };
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = QUESTION_BANK;
+// Curated distractor database for every stage to ensure high-quality 4-choice options
+const STAGE_DISTRACTORS = {
+    // Basic
+    'LIBRARY': ['MUSEUM', 'THEATER', 'HOSPITAL'],
+    'CLOCK': ['COMPASS', 'MIRROR', 'CALENDAR'],
+    'STORMY': ['SUNNY', 'FREEZING', 'HUMID'],
+    'BOUGHT': ['BROUGHT', 'BORROWED', 'BUILDED'],
+    'SAFE': ['DULL', 'RISKY', 'ALERT'],
+    'THROUGH': ['ACROSS', 'OVER', 'TOWARDS'],
+    'GLASSES': ['SHADES', 'SCARF', 'GLOVES'],
+    'ARCHITECT': ['ENGINEER', 'ASTRONOMER', 'CARPENTER'],
+    'WELCOME': ['GRATEFUL', 'PLEASURE', 'EXCUSED'],
+    'BEAUTIFUL': ['BEUTIFUL', 'BEAUTYFUL', 'BEAUTIFULL'],
+    'M': ['N', 'T', 'E'],
+    // Intermediate
+    'AFFECT': ['EFFECT', 'IMPACT', 'INFECT'],
+    'UP': ['DOWN', 'FORWARD', 'OVER'],
+    'OF': ['FOR', 'WITH', 'AT'],
+    'MUST': ['SHOULD', 'MIGHT', 'COULD'],
+    'DECISION': ['DECIDEMENT', 'DECISIVENESS', 'DECIDING'],
+    'DESPITE': ['ALTHOUGH', 'WHILST', 'BESIDES'],
+    'BULLET': ['STICK', 'PILL', 'NEEDLE'],
+    'INFORMATION': ['INFORMATIONS', 'INFORMS', 'INFORMING'],
+    'MILK': ['WATER', 'TEA', 'COFFEE'],
+    'WOULD': ['MIGHT', 'SHOULD', 'CAN'],
+    'KAYAK': ['CANOE', 'YACHT', 'FERRY'],
+    // Advanced
+    'ARE': ['IS', 'WERE', 'DO'],
+    'EPHEMERAL': ['PERENNIAL', 'EQUIVOCAL', 'EFFERVESCENT'],
+    'RESIGN': ['RESIGNS', 'RESIGNED', 'RESIGNING'],
+    'DEVIL': ['ANGEL', 'SAINT', 'FOOL'],
+    'HAD': ['WERE', 'SHOULD', 'DID'],
+    'MITIGATE': ['EXACERBATE', 'MEDIATE', 'OBLITERATE'],
+    'WITH': ['OF', 'ABOUT', 'FROM'],
+    'SILENCE': ['VACUUM', 'DARKNESS', 'WHISPER'],
+    'HARD': ['HARDLY', 'HARDEN', 'HARDSHIPS'],
+    'QUO': ['VITA', 'FACTO', 'JURE'],
+    'SERENDIPITY': ['UBIQUITY', 'EQUANIMITY', 'SAGACITY']
+};
+
+// Generic distractor pool fallback
+const GENERIC_DISTRACTOR_POOL = [
+    'TRANQUILITY', 'EUPHORIA', 'INNOVATION', 'PARADIGM', 'CONUNDRUM',
+    'ELOQUENT', 'RESILIENT', 'PRAGMATIC', 'LUMINOUS', 'TENACIOUS',
+    'BEAUTY', 'WISDOM', 'COURAGE', 'HARMONY', 'VICTORY'
+];
+
+/**
+ * Returns a complete question object with 4 shuffled multiple choice options
+ */
+function getQuestionWithChoices(stageObj) {
+    const rawAnswer = stageObj.answer.toUpperCase().trim();
+    let distractors = STAGE_DISTRACTORS[rawAnswer] ? [...STAGE_DISTRACTORS[rawAnswer]] : [];
+    
+    // If fewer than 3 distractors, pull from other stage answers or generic pool
+    if (distractors.length < 3) {
+        const otherAnswers = [];
+        ['basic', 'intermediate', 'advanced'].forEach(lvl => {
+            QUESTION_BANK[lvl].stages.forEach(stg => {
+                const ans = stg.answer.toUpperCase().trim();
+                if (ans !== rawAnswer && !distractors.includes(ans) && !otherAnswers.includes(ans)) {
+                    otherAnswers.push(ans);
+                }
+            });
+        });
+        
+        // Shuffle other answers
+        otherAnswers.sort(() => Math.random() - 0.5);
+        while (distractors.length < 3 && otherAnswers.length > 0) {
+            distractors.push(otherAnswers.pop());
+        }
+        
+        // Final fallback to generic pool
+        let poolIndex = 0;
+        while (distractors.length < 3) {
+            distractors.push(GENERIC_DISTRACTOR_POOL[poolIndex % GENERIC_DISTRACTOR_POOL.length]);
+            poolIndex++;
+        }
+    }
+    
+    // Take exactly 3 distractors + 1 correct answer
+    const choices = [rawAnswer, ...distractors.slice(0, 3)];
+    // Fisher-Yates Shuffle
+    for (let i = choices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [choices[i], choices[j]] = [choices[j], choices[i]];
+    }
+
+    return {
+        ...stageObj,
+        correctAnswer: rawAnswer,
+        choices: choices
+    };
 }
+
+/**
+ * Get all questions across all levels in a flat array
+ */
+function getAllQuestions() {
+    const all = [];
+    ['basic', 'intermediate', 'advanced'].forEach(lvl => {
+        QUESTION_BANK[lvl].stages.forEach(stg => {
+            all.push({
+                ...stg,
+                level: lvl
+            });
+        });
+    });
+    return all;
+}
+
+/**
+ * Get a random question with 4 multiple choice options
+ */
+function getRandomQuestionWithChoices(preferredLevel = null) {
+    let pool = [];
+    if (preferredLevel && QUESTION_BANK[preferredLevel]) {
+        pool = QUESTION_BANK[preferredLevel].stages.map(s => ({ ...s, level: preferredLevel }));
+    } else {
+        pool = getAllQuestions();
+    }
+    const randomIndex = Math.floor(Math.random() * pool.length);
+    return getQuestionWithChoices(pool[randomIndex]);
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        QUESTION_BANK,
+        getQuestionWithChoices,
+        getAllQuestions,
+        getRandomQuestionWithChoices
+    };
+}
+

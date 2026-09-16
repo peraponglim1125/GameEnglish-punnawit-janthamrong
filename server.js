@@ -12,6 +12,9 @@ const DEFAULT_PORT = parseInt(process.env.PORT || '3000', 10);
 // Serve static frontend files
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Favicon handler
+app.get('/favicon.ico', (req, res) => res.status(204).end());
+
 // Helper: Get best local IPv4 address on LAN / Wi-Fi (filters out VirtualBox, VMware, WSL, etc.)
 function getLocalIP() {
     const interfaces = os.networkInterfaces();

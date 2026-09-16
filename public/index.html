@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>English Quest: Mastery & Trivia 🎮</title>
     
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎮</text></svg>">
+    
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +33,277 @@
     <!-- Animated Victory Running Character Overlay -->
     <div id="characterOverlay" class="character-overlay"></div>
 
-    <!-- MAIN 3-PANEL EXPANDED ARCADE COCKPIT -->
+    <!-- ==========================================
+         ROAMING FLOATING MASCOTS (ACROSS ENTIRE UI)
+         ========================================== -->
+    <!-- Mascot 1: Pip the Cyber Kitty (Floating Flight) -->
+    <div id="mascotLeft" class="ui-climber ui-climber-left" onclick="game.interactMascot('left')" title="Pip the Explorer Kitty 🐾 (Click me!)">
+            <div class="mascot-speech-bubble" id="mascotSpeechLeft">Meow! 🐾 Let's play!</div>
+            <div class="mascot-sparkle-trail" id="mascotSparkleLeft">✨💖</div>
+            <div class="mascot-svg-wrapper">
+                <svg class="mascot-svg mascot-cat" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="catBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#818cf8"/>
+                            <stop offset="50%" stop-color="#6366f1"/>
+                            <stop offset="100%" stop-color="#4f46e5"/>
+                        </linearGradient>
+                        <linearGradient id="catBellyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff"/>
+                            <stop offset="100%" stop-color="#c7d2fe"/>
+                        </linearGradient>
+                        <linearGradient id="wingGradLeft" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#a5f3fc"/>
+                            <stop offset="100%" stop-color="#38bdf8"/>
+                        </linearGradient>
+                        <radialGradient id="eyeGradLeft" cx="50%" cy="40%" r="60%">
+                            <stop offset="0%" stop-color="#38bdf8"/>
+                            <stop offset="60%" stop-color="#0284c7"/>
+                            <stop offset="100%" stop-color="#0f172a"/>
+                        </radialGradient>
+                        <filter id="glowFilterPip" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="rgba(99, 102, 241, 0.45)"/>
+                        </filter>
+                    </defs>
+
+                    <!-- Fluttering Fairy/Cyber Wings -->
+                    <g class="mascot-wings mascot-wings-cat">
+                        <!-- Left Wing -->
+                        <path class="mascot-wing-left" d="M38 52 C20 30 5 42 12 62 C16 70 28 66 38 58 Z" fill="url(#wingGradLeft)" opacity="0.85" filter="url(#glowFilterPip)"/>
+                        <!-- Right Wing -->
+                        <path class="mascot-wing-right" d="M82 52 C100 30 115 42 108 62 C104 70 92 66 82 58 Z" fill="url(#wingGradLeft)" opacity="0.85" filter="url(#glowFilterPip)"/>
+                    </g>
+
+                    <!-- Animated Cat Tail -->
+                    <g class="mascot-cat-tail">
+                        <path d="M34 86 C14 86 6 66 16 54 C22 46 30 52 24 62 C18 72 26 80 36 82 Z" fill="url(#catBodyGrad)" filter="url(#glowFilterPip)"/>
+                        <path d="M16 54 C22 46 28 50 24 62 C20 56 18 54 16 54 Z" fill="#38bdf8"/>
+                    </g>
+
+                    <!-- Hanging / Floating Body -->
+                    <g class="mascot-cat-body">
+                        <!-- Body Base -->
+                        <path d="M42 60 C36 78 38 98 60 98 C82 98 84 78 78 60 Z" fill="url(#catBodyGrad)" filter="url(#glowFilterPip)"/>
+                        <!-- Soft Belly -->
+                        <ellipse cx="60" cy="80" rx="14" ry="14" fill="url(#catBellyGrad)"/>
+                        
+                        <!-- Dangling Back Paws -->
+                        <ellipse class="mascot-back-foot-left" cx="44" cy="98" rx="8" ry="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                        <ellipse class="mascot-back-foot-right" cx="76" cy="98" rx="8" ry="6" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                        <!-- Back Paw Pads -->
+                        <circle cx="44" cy="99" r="3" fill="#f472b6"/>
+                        <circle cx="76" cy="99" r="3" fill="#f472b6"/>
+                    </g>
+
+                    <!-- Cat Head & Ears -->
+                    <g class="mascot-cat-head">
+                        <!-- Left Ear -->
+                        <g class="mascot-cat-ear-left">
+                            <polygon points="36,46 22,18 50,30" fill="url(#catBodyGrad)"/>
+                            <polygon points="36,43 27,24 46,32" fill="#f472b6"/>
+                        </g>
+                        <!-- Right Ear -->
+                        <g class="mascot-cat-ear-right">
+                            <polygon points="84,46 98,18 70,30" fill="url(#catBodyGrad)"/>
+                            <polygon points="84,43 93,24 74,32" fill="#f472b6"/>
+                        </g>
+
+                        <!-- Head Shape -->
+                        <circle cx="60" cy="50" r="28" fill="url(#catBodyGrad)" filter="url(#glowFilterPip)"/>
+
+                        <!-- Cyber Band / Goggles -->
+                        <rect x="36" y="34" width="48" height="7" rx="3.5" fill="#1e1b4b" stroke="#38bdf8" stroke-width="1.5"/>
+                        <circle cx="60" cy="37.5" r="4.5" fill="#38bdf8"/>
+                        <polygon points="60,34 61.5,36.5 64,36.8 62,38.7 62.5,41.2 60,39.8 57.5,41.2 58,38.7 56,36.8 58.5,36.5" fill="#fef08a"/>
+
+                        <!-- Anime Sparkling Eyes -->
+                        <g class="mascot-eye-group">
+                            <ellipse cx="48" cy="52" rx="7" ry="8.5" fill="url(#eyeGradLeft)"/>
+                            <ellipse cx="46" cy="49" rx="3" ry="4" fill="#ffffff"/>
+                            <circle cx="51" cy="55" r="1.5" fill="#ffffff"/>
+                            <circle cx="49" cy="50" r="1" fill="#bae6fd"/>
+                        </g>
+                        <g class="mascot-eye-group">
+                            <ellipse cx="72" cy="52" rx="7" ry="8.5" fill="url(#eyeGradLeft)"/>
+                            <ellipse cx="70" cy="49" rx="3" ry="4" fill="#ffffff"/>
+                            <circle cx="75" cy="55" r="1.5" fill="#ffffff"/>
+                            <circle cx="73" cy="50" r="1" fill="#bae6fd"/>
+                        </g>
+
+                        <!-- Blushing Cheeks -->
+                        <ellipse cx="40" cy="58" rx="4.5" ry="2.5" fill="#f472b6" opacity="0.6"/>
+                        <ellipse cx="80" cy="58" rx="4.5" ry="2.5" fill="#f472b6" opacity="0.6"/>
+
+                        <!-- Cute Cat Nose & Mouth :3 -->
+                        <polygon points="60,57 58,55 62,55" fill="#f472b6"/>
+                        <path d="M54 60 Q57 63 60 60 Q63 63 66 60" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+                        <!-- Whiskers -->
+                        <line x1="34" y1="55" x2="20" y2="52" stroke="#e0e7ff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+                        <line x1="34" y1="59" x2="20" y2="60" stroke="#e0e7ff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+                        <line x1="86" y1="55" x2="100" y2="52" stroke="#e0e7ff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+                        <line x1="86" y1="59" x2="100" y2="60" stroke="#e0e7ff" stroke-width="1.5" stroke-linecap="round" opacity="0.8"/>
+                    </g>
+
+                    <!-- Front Paws Hooked Over Edge / Floating Paws -->
+                    <g class="mascot-front-paws">
+                        <!-- Left Paw -->
+                        <g class="mascot-paw-left">
+                            <ellipse cx="36" cy="30" rx="10" ry="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                            <ellipse cx="36" cy="30" rx="5" ry="4" fill="#f472b6"/>
+                            <circle cx="31" cy="27" r="2" fill="#f472b6"/>
+                            <circle cx="36" cy="25" r="2" fill="#f472b6"/>
+                            <circle cx="41" cy="27" r="2" fill="#f472b6"/>
+                        </g>
+                        <!-- Right Paw -->
+                        <g class="mascot-paw-right">
+                            <ellipse cx="84" cy="30" rx="10" ry="8" fill="#e0e7ff" stroke="#6366f1" stroke-width="2"/>
+                            <ellipse cx="84" cy="30" rx="5" ry="4" fill="#f472b6"/>
+                            <circle cx="79" cy="27" r="2" fill="#f472b6"/>
+                            <circle cx="84" cy="25" r="2" fill="#f472b6"/>
+                            <circle cx="89" cy="27" r="2" fill="#f472b6"/>
+                        </g>
+                    </g>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Mascot 2: Mochi the Shiba Explorer (Floating Flight) -->
+        <div id="mascotRight" class="ui-climber ui-climber-right" onclick="game.interactMascot('right')" title="Mochi the Cheerful Companion ⭐ (Click me!)">
+            <div class="mascot-speech-bubble" id="mascotSpeechRight">Let's Go! ⚡ Quest!</div>
+            <div class="mascot-sparkle-trail" id="mascotSparkleRight">⭐🔥</div>
+            <div class="mascot-svg-wrapper">
+                <svg class="mascot-svg mascot-shiba" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <defs>
+                        <linearGradient id="shibaBodyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fbbf24"/>
+                            <stop offset="50%" stop-color="#f59e0b"/>
+                            <stop offset="100%" stop-color="#d97706"/>
+                        </linearGradient>
+                        <linearGradient id="shibaWhiteGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+                            <stop offset="0%" stop-color="#ffffff"/>
+                            <stop offset="100%" stop-color="#fef3c7"/>
+                        </linearGradient>
+                        <linearGradient id="wingGradRight" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#fde68a"/>
+                            <stop offset="100%" stop-color="#f59e0b"/>
+                        </linearGradient>
+                        <radialGradient id="eyeGradRight" cx="50%" cy="40%" r="60%">
+                            <stop offset="0%" stop-color="#1e293b"/>
+                            <stop offset="70%" stop-color="#0f172a"/>
+                            <stop offset="100%" stop-color="#020617"/>
+                        </radialGradient>
+                        <filter id="glowFilterMochi" x="-20%" y="-20%" width="140%" height="140%">
+                            <feDropShadow dx="0" dy="4" stdDeviation="4" flood-color="rgba(245, 158, 11, 0.45)"/>
+                        </filter>
+                    </defs>
+
+                    <!-- Fluttering Angel Wings -->
+                    <g class="mascot-wings mascot-wings-shiba">
+                        <!-- Left Wing -->
+                        <path class="mascot-wing-left" d="M38 52 C20 30 5 42 12 62 C16 70 28 66 38 58 Z" fill="url(#wingGradRight)" opacity="0.88" filter="url(#glowFilterMochi)"/>
+                        <!-- Right Wing -->
+                        <path class="mascot-wing-right" d="M82 52 C100 30 115 42 108 62 C104 70 92 66 82 58 Z" fill="url(#wingGradRight)" opacity="0.88" filter="url(#glowFilterMochi)"/>
+                    </g>
+
+                    <!-- Fluffy Shiba Tail -->
+                    <g class="mascot-shiba-tail">
+                        <circle cx="88" cy="74" r="16" fill="url(#shibaBodyGrad)" filter="url(#glowFilterMochi)"/>
+                        <circle cx="92" cy="70" r="11" fill="url(#shibaWhiteGrad)"/>
+                    </g>
+
+                    <!-- Hanging / Floating Body -->
+                    <g class="mascot-shiba-body">
+                        <!-- Body Base -->
+                        <path d="M42 60 C36 78 38 98 60 98 C82 98 84 78 78 60 Z" fill="url(#shibaBodyGrad)" filter="url(#glowFilterMochi)"/>
+                        <!-- White Belly -->
+                        <ellipse cx="60" cy="80" rx="14" ry="14" fill="url(#shibaWhiteGrad)"/>
+                        
+                        <!-- Dangling Kicking Back Paws -->
+                        <g class="mascot-shiba-feet">
+                            <ellipse class="mascot-back-foot-left" cx="44" cy="98" rx="8" ry="6" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+                            <ellipse class="mascot-back-foot-right" cx="76" cy="98" rx="8" ry="6" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+                            <!-- Foot Pads -->
+                            <circle cx="44" cy="99" r="3" fill="#fb7185"/>
+                            <circle cx="76" cy="99" r="3" fill="#fb7185"/>
+                        </g>
+                    </g>
+
+                    <!-- Shiba Head & Ears -->
+                    <g class="mascot-shiba-head">
+                        <!-- Left Ear -->
+                        <g class="mascot-shiba-ear-left">
+                            <polygon points="34,44 18,16 48,28" fill="url(#shibaBodyGrad)"/>
+                            <polygon points="34,41 24,22 44,30" fill="#fef3c7"/>
+                        </g>
+                        <!-- Right Ear (Cute Bouncing / Wiggle) -->
+                        <g class="mascot-shiba-ear-right">
+                            <polygon points="86,44 102,16 72,28" fill="url(#shibaBodyGrad)"/>
+                            <polygon points="86,41 96,22 76,30" fill="#fef3c7"/>
+                        </g>
+
+                        <!-- Head Base -->
+                        <circle cx="60" cy="50" r="28" fill="url(#shibaBodyGrad)" filter="url(#glowFilterMochi)"/>
+
+                        <!-- Cute White Muzzle & Cheeks -->
+                        <ellipse cx="60" cy="58" rx="16" ry="12" fill="url(#shibaWhiteGrad)"/>
+                        <circle cx="48" cy="46" r="3" fill="url(#shibaWhiteGrad)"/>
+                        <circle cx="72" cy="46" r="3" fill="url(#shibaWhiteGrad)"/>
+
+                        <!-- Head Decoration (Cute Hero Headband Star) -->
+                        <circle cx="78" cy="30" r="6" fill="#fb7185"/>
+                        <polygon points="78,26 80,29 83,30 81,32 81.5,35 78,33 75.5,35 76,32 74,30 77,29" fill="#fef08a"/>
+
+                        <!-- Big Sparkling Round Anime Eyes -->
+                        <g class="mascot-eye-group">
+                            <ellipse cx="48" cy="50" rx="6.5" ry="8" fill="url(#eyeGradRight)"/>
+                            <ellipse cx="46" cy="47" rx="3" ry="3.8" fill="#ffffff"/>
+                            <circle cx="51" cy="53" r="1.5" fill="#ffffff"/>
+                            <polygon points="50,51 51,52 50,53 49,52" fill="#38bdf8"/>
+                        </g>
+                        <g class="mascot-eye-group">
+                            <ellipse cx="72" cy="50" rx="6.5" ry="8" fill="url(#eyeGradRight)"/>
+                            <ellipse cx="70" cy="47" rx="3" ry="3.8" fill="#ffffff"/>
+                            <circle cx="75" cy="53" r="1.5" fill="#ffffff"/>
+                            <polygon points="74,51 75,52 74,53 73,52" fill="#38bdf8"/>
+                        </g>
+
+                        <!-- Blushing Pink Cheeks -->
+                        <ellipse cx="38" cy="56" rx="5" ry="3" fill="#fb7185" opacity="0.65"/>
+                        <ellipse cx="82" cy="56" rx="5" ry="3" fill="#fb7185" opacity="0.65"/>
+
+                        <!-- Nose & Mouth with Little Tongue Blep -->
+                        <ellipse cx="60" cy="54" rx="3.5" ry="2.5" fill="#0f172a"/>
+                        <path d="M56 57 Q60 59 64 57" stroke="#0f172a" stroke-width="2" stroke-linecap="round" fill="none"/>
+                        <path d="M58 58 C58 63 62 63 62 58 Z" fill="#f43f5e"/>
+                    </g>
+
+                    <!-- Front Paws Hooked Over Edge / Floating Paws -->
+                    <g class="mascot-front-paws">
+                        <!-- Left Paw -->
+                        <g class="mascot-paw-left">
+                            <ellipse cx="36" cy="30" rx="10" ry="8" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+                            <ellipse cx="36" cy="30" rx="5" ry="4" fill="#fb7185"/>
+                            <circle cx="31" cy="27" r="2" fill="#fb7185"/>
+                            <circle cx="36" cy="25" r="2" fill="#fb7185"/>
+                            <circle cx="41" cy="27" r="2" fill="#fb7185"/>
+                        </g>
+                        <!-- Right Paw -->
+                        <g class="mascot-paw-right">
+                            <ellipse cx="84" cy="30" rx="10" ry="8" fill="#ffffff" stroke="#f59e0b" stroke-width="2"/>
+                            <ellipse cx="84" cy="30" rx="5" ry="4" fill="#fb7185"/>
+                            <circle cx="79" cy="27" r="2" fill="#fb7185"/>
+                            <circle cx="84" cy="25" r="2" fill="#fb7185"/>
+                            <circle cx="89" cy="27" r="2" fill="#fb7185"/>
+                        </g>
+                    </g>
+                </svg>
+            </div>
+    </div>
+
+    <!-- ==========================================
+         MAIN 3-PANEL EXPANDED ARCADE COCKPIT
+         ========================================== -->
     <div class="game-cockpit-layout">
         <!-- ==========================================
              LEFT SIDEBAR: PLAYER PROFILE & ACHIEVEMENTS
@@ -71,6 +344,20 @@
                     <span class="brand-badge">PRO</span>
                 </div>
                 <div class="header-actions">
+                    <!-- Coin Balance Pill -->
+                    <div class="coin-display-pill" onclick="game.openShop()" title="Your Gold Coins (Click to open Shop)">
+                        <span class="coin-icon">🪙</span>
+                        <span id="headerCoinCount" class="coin-count-val">100</span>
+                    </div>
+
+                    <!-- Quick Action Buttons -->
+                    <button class="header-btn shop-header-btn" onclick="game.openShop()" title="Item & Skin Shop">
+                        🛒 Shop
+                    </button>
+                    <button class="header-btn cert-header-btn" onclick="game.openCertificate()" title="Official Certificate">
+                        📜 Certificate
+                    </button>
+
                     <!-- Global Volume Slider & Mute Pill -->
                     <div class="volume-control-pill" title="Music & Sound Volume">
                         <button id="btnSoundToggle" class="icon-btn" style="width:32px; height:32px; background:none; border:none; padding:0; cursor:pointer;" title="Mute / Unmute" aria-label="Toggle Sound">
@@ -98,18 +385,19 @@
                 <div class="hero-section">
                     <span class="hero-tag">⚔️ Interactive Language Arcade</span>
                     <h1 class="hero-title">Master the English Language</h1>
-                    <p class="hero-subtitle">Select your difficulty tier, solve context-rich challenges, and unlock new stages.</p>
+                    <p class="hero-subtitle">Select your difficulty tier, battle friends in 2-Player Duel, or conquer special arcade challenges.</p>
                 </div>
 
-                <!-- 3 Difficulty Level Cards -->
+                <!-- 4 Main Difficulty / Game Modes -->
                 <div class="level-cards-grid">
                     <!-- Level 1: Basic -->
                     <div class="level-card basic" onclick="game.selectLevel('basic')">
                         <div class="level-info">
                             <div class="level-icon">🌱</div>
                             <div class="level-details">
-                                <h3>1. Basic (Novice Adventurer)</h3>
-                                <p>Context clues, word scrambles, and A1-A2 foundations</p>
+                                <span class="tier-pill tier-basic">TIER 1 • NOVICE</span>
+                                <h3>1. Basic Foundations</h3>
+                                <p>Context clues, word scrambles, and A1-A2 trivia</p>
                             </div>
                         </div>
                         <div class="level-arrow">➔</div>
@@ -120,8 +408,9 @@
                         <div class="level-info">
                             <div class="level-icon">⚡</div>
                             <div class="level-details">
-                                <h3>2. Intermediate (Skill Specialist)</h3>
-                                <p>Phrasal verbs, collocations, and B1-B2 grammar mastery</p>
+                                <span class="tier-pill tier-intermediate">TIER 2 • ADEPT</span>
+                                <h3>2. Intermediate Mastery</h3>
+                                <p>Phrasal verbs, collocations, and B1-B2 grammar</p>
                             </div>
                         </div>
                         <div class="level-arrow">➔</div>
@@ -132,27 +421,79 @@
                         <div class="level-info">
                             <div class="level-icon">🔥</div>
                             <div class="level-details">
-                                <h3>3. Advanced (Grand Master)</h3>
-                                <p>Negative inversions, GRE/C2 lexis, subjunctive moods & idioms</p>
+                                <span class="tier-pill tier-advanced">TIER 3 • EXPERT</span>
+                                <h3>3. Advanced Grand Master</h3>
+                                <p>Negative inversions, GRE/C2 lexis & idioms</p>
+                            </div>
+                        </div>
+                        <div class="level-arrow">➔</div>
+                    </div>
+
+                    <!-- Level 4: 2-Player Local Duel -->
+                    <div class="level-card duel" onclick="game.startDuelMode()">
+                        <div class="level-info">
+                            <div class="level-icon">👥</div>
+                            <div class="level-details">
+                                <span class="tier-pill tier-duel">1V1 PVP ARENA</span>
+                                <h3>4. 2-Player Local Duel</h3>
+                                <p>Split-Screen 1v1 battle! แย่งกดตอบชิงแต้ม First to 5</p>
                             </div>
                         </div>
                         <div class="level-arrow">➔</div>
                     </div>
                 </div>
 
+                <!-- Special Arcade Challenges Banner -->
+                <div class="arcade-modes-section">
+                    <div class="section-title-badge">⚡ SPECIAL ARCADE MODES</div>
+                    <div class="arcade-modes-grid">
+                        <!-- Time Attack -->
+                        <div class="arcade-mode-card time-attack" onclick="game.startTimeAttack()">
+                            <div class="arcade-card-icon">⚡</div>
+                            <div class="arcade-card-info">
+                                <h4>Time Attack (60s)</h4>
+                                <p>Speedrun answering +3s per streak</p>
+                                <span class="arcade-best-badge" id="bestTimeAttack">Best: 0 pts</span>
+                            </div>
+                        </div>
+                        <!-- Endless Survival -->
+                        <div class="arcade-mode-card endless" onclick="game.startEndless()">
+                            <div class="arcade-card-icon">♾️</div>
+                            <div class="arcade-card-info">
+                                <h4>Endless Survival</h4>
+                                <p>Infinite waves, 3 hearts, power-up drops</p>
+                                <span class="arcade-best-badge" id="bestEndless">Best: Wave 0</span>
+                            </div>
+                        </div>
+                        <!-- Boss Battle -->
+                        <div class="arcade-mode-card boss-battle" onclick="game.startBossBattle()">
+                            <div class="arcade-card-icon">🐉</div>
+                            <div class="arcade-card-info">
+                                <h4>Boss Battle</h4>
+                                <p>Lexicon Dragon 1,000 HP showdown</p>
+                                <span class="arcade-best-badge" id="bossDefeatedBadge">Defeated: 0</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- User Quick Stats -->
                 <div class="user-quick-stats">
                     <div class="stat-box">
+                        <div class="stat-icon-label">🏆 Total Score</div>
                         <div id="statTotalScore" class="stat-val">0</div>
-                        <div class="stat-label">Total Score</div>
                     </div>
                     <div class="stat-box">
+                        <div class="stat-icon-label">🎯 Completed</div>
                         <div id="statClearedStages" class="stat-val">0/33</div>
-                        <div class="stat-label">Stages Cleared</div>
                     </div>
                     <div class="stat-box">
+                        <div class="stat-icon-label">🔥 Max Streak</div>
                         <div id="statMaxCombo" class="stat-val">0x</div>
-                        <div class="stat-label">Max Streak</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-icon-label">🪙 Gold Vault</div>
+                        <div id="statTotalCoins" class="stat-val">100</div>
                     </div>
                 </div>
             </div>
@@ -273,6 +614,165 @@
                 <div id="feedbackBox" class="feedback-box">
                     <div id="feedbackTitle" style="font-weight: 800; margin-bottom: 4px;"></div>
                     <div id="feedbackDesc"></div>
+                </div>
+            </div>
+
+            <!-- SCREEN 4: 2-PLAYER LOCAL DUEL (SPLIT-SCREEN) -->
+            <div id="screenDuel" class="screen">
+                <div class="duel-top-bar">
+                    <button class="back-btn" onclick="game.goToHome()">⬅ Exit Duel</button>
+                    <div class="duel-score-scoreboard">
+                        <div class="duel-score-player p1">
+                            <span class="p1-avatar">⚡</span>
+                            <span class="p1-name">PLAYER 1</span>
+                            <span id="duelScoreP1" class="duel-score-badge">0</span>
+                        </div>
+                        <div class="duel-vs-badge">VS</div>
+                        <div class="duel-score-player p2">
+                            <span id="duelScoreP2" class="duel-score-badge">0</span>
+                            <span class="p2-name">PLAYER 2</span>
+                            <span class="p2-avatar">🔥</span>
+                        </div>
+                    </div>
+                    <div class="duel-target-label">First to 5 Points!</div>
+                </div>
+
+                <!-- Central Duel Prompt Area -->
+                <div class="duel-question-center">
+                    <span id="duelQuestionType" class="question-type-tag">SPEED DUEL</span>
+                    <h3 id="duelQuestionPrompt" class="duel-prompt-text">Loading question...</h3>
+                    <div id="duelQuestionDisplay" class="duel-display-slot">_ _ _ _</div>
+                    <div id="duelBuzzerNotice" class="duel-buzzer-notice"></div>
+                </div>
+
+                <!-- Split Screen Arena: Left (P1) vs Right (P2) -->
+                <div class="duel-split-arena">
+                    <!-- Player 1 Zone -->
+                    <div class="duel-player-zone p1-zone" id="duelZoneP1">
+                        <div class="duel-zone-header">
+                            <span class="player-tag">⚡ PLAYER 1</span>
+                            <span class="keys-tip">Keys: A • S • D • F</span>
+                        </div>
+                        <div class="duel-options-grid" id="duelOptionsP1">
+                            <!-- 4 Choice buttons injected by game.js -->
+                        </div>
+                    </div>
+
+                    <!-- Player 2 Zone -->
+                    <div class="duel-player-zone p2-zone" id="duelZoneP2">
+                        <div class="duel-zone-header">
+                            <span class="player-tag">🔥 PLAYER 2</span>
+                            <span class="keys-tip">Keys: H • J • K • L (or Tap)</span>
+                        </div>
+                        <div class="duel-options-grid" id="duelOptionsP2">
+                            <!-- 4 Choice buttons injected by game.js -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 5: TIME ATTACK MODE (60s SPEEDRUN) -->
+            <div id="screenTimeAttack" class="screen">
+                <div class="game-top-bar">
+                    <button class="back-btn" onclick="game.goToHome()">⬅ Exit</button>
+                    <div class="timeattack-timer-pill" id="timeAttackPill">
+                        <span>⏱️</span>
+                        <span id="timeAttackSeconds">60.0s</span>
+                        <div class="timer-mini-bar"><div id="timeAttackFill" class="timer-mini-fill" style="width:100%"></div></div>
+                    </div>
+                    <div class="game-stats-pill">
+                        <span class="score-badge" id="taScoreDisplay">Score: 0</span>
+                        <span class="combo-badge" id="taComboDisplay">🔥 0x</span>
+                    </div>
+                </div>
+
+                <div class="timeattack-arena">
+                    <div class="question-card ta-card">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <span id="taTypeTag" class="question-type-tag">SPEED CHALLENGE</span>
+                            <span id="taBonusNotice" class="ta-bonus-notice">+3s BONUS!</span>
+                        </div>
+                        <p id="taPrompt" class="question-prompt"></p>
+                        <div id="taDisplaySlot" class="question-display-slot"></div>
+                    </div>
+
+                    <!-- Rapid Choice Buttons Grid -->
+                    <div class="timeattack-choices-grid" id="taChoicesGrid">
+                        <!-- 4 rapid buttons injected by game.js -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- SCREEN 6: ENDLESS SURVIVAL MODE -->
+            <div id="screenEndless" class="screen">
+                <div class="game-top-bar">
+                    <button class="back-btn" onclick="game.goToHome()">⬅ Exit</button>
+                    <div class="game-stage-indicator">
+                        <span id="endlessWaveLabel">Wave 1 ♾️</span>
+                    </div>
+                    <div class="lives-container" id="endlessLives">
+                        <span class="heart" id="endlessHeart1">❤️</span>
+                        <span class="heart" id="endlessHeart2">❤️</span>
+                        <span class="heart" id="endlessHeart3">❤️</span>
+                    </div>
+                    <div class="game-stats-pill">
+                        <span class="score-badge" id="endlessScoreDisplay">Score: 0</span>
+                    </div>
+                </div>
+
+                <div class="question-card">
+                    <span id="endlessTypeTag" class="question-type-tag">SURVIVAL WAVE</span>
+                    <p id="endlessPrompt" class="question-prompt"></p>
+                    <div id="endlessDisplaySlot" class="question-display-slot">_ _ _ _</div>
+                </div>
+
+                <!-- Rapid Options Grid -->
+                <div class="timeattack-choices-grid" id="endlessChoicesGrid"></div>
+            </div>
+
+            <!-- SCREEN 7: BOSS BATTLE ARENA -->
+            <div id="screenBoss" class="screen">
+                <div class="boss-top-bar">
+                    <button class="back-btn" onclick="game.goToHome()">⬅ Retreat</button>
+                    <div class="boss-turn-timer" id="bossTurnTimer">
+                        <span>⏳ Turn:</span> <strong id="bossTurnSeconds">15s</strong>
+                    </div>
+                    <div class="lives-container" id="bossPlayerLives">
+                        <span class="heart" id="bossHeart1">❤️</span>
+                        <span class="heart" id="bossHeart2">❤️</span>
+                        <span class="heart" id="bossHeart3">❤️</span>
+                    </div>
+                </div>
+
+                <!-- Boss Entity Banner & HP Bar -->
+                <div class="boss-arena-card">
+                    <div class="boss-mascot-visual" id="bossVisual">
+                        <div class="boss-avatar-glow">🐉</div>
+                        <div class="boss-name-title">LEXICON DRAGON</div>
+                        <div class="boss-subtitle">Overlord of Ancient Lexis</div>
+                    </div>
+
+                    <div class="boss-hp-wrapper">
+                        <div class="boss-hp-header">
+                            <span>BOSS HP</span>
+                            <span id="bossHpText">1000 / 1000</span>
+                        </div>
+                        <div class="boss-hp-bar">
+                            <div id="bossHpFill" class="boss-hp-fill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Boss Question Card -->
+                <div class="question-card boss-question-card">
+                    <span id="bossQuestionTag" class="question-type-tag">BOSS RIDDLE</span>
+                    <p id="bossPrompt" class="question-prompt"></p>
+                    <div id="bossDisplaySlot" class="question-display-slot"></div>
+                </div>
+
+                <!-- Boss Multiple Choice Attacks -->
+                <div class="boss-attacks-grid" id="bossChoicesGrid">
+                    <!-- 4 choice buttons that deal damage -->
                 </div>
             </div>
         </main>
@@ -413,6 +913,358 @@
             </button>
             <button class="modal-btn secondary" onclick="game.goToStageMap()">
                 Select Another Stage
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL 4: 🛒 ARCADE ITEM & SKIN SHOP
+         ========================================== -->
+    <div id="modalShop" class="modal-overlay">
+        <div class="modal-content shop-modal-content">
+            <div class="modal-header-row">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div class="modal-icon" style="font-size: 1.8rem; margin: 0;">🛒</div>
+                    <div>
+                        <h2 class="modal-title" style="color: #fbbf24; text-align: left; margin: 0; font-size: 1.4rem;">Arcade Shop & Wardrobe</h2>
+                        <p class="modal-desc" style="text-align: left; margin: 0; font-size: 0.82rem;">Upgrade power-ups, customize game themes, and dress up your mascots!</p>
+                    </div>
+                </div>
+                <div class="coin-display-pill" style="margin: 0;">
+                    <span class="coin-icon">🪙</span>
+                    <span id="shopCoinCount">100</span>
+                </div>
+            </div>
+
+            <!-- Shop Tab Navigation -->
+            <div class="shop-tabs">
+                <button class="shop-tab-btn active" onclick="game.switchShopTab('powerups')">⚡ Power-Ups</button>
+                <button class="shop-tab-btn" onclick="game.switchShopTab('themes')">🎨 Color Themes</button>
+                <button class="shop-tab-btn" onclick="game.switchShopTab('hats')">🧢 Mascot Wardrobe</button>
+            </div>
+
+            <!-- Tab 1: Power-Ups -->
+            <div id="shopTabPowerups" class="shop-tab-pane active">
+                <div class="shop-items-grid">
+                    <div class="shop-item-card">
+                        <div class="shop-item-icon">🔤</div>
+                        <div class="shop-item-info">
+                            <h4>Reveal Letter</h4>
+                            <p>Reveals starting letters of the answer</p>
+                            <span class="shop-owned-tag">Owned: <span id="shopOwnedReveal">2</span></span>
+                        </div>
+                        <button class="shop-buy-btn" onclick="game.buyItem('reveal', 100)">
+                            🪙 100 Buy
+                        </button>
+                    </div>
+
+                    <div class="shop-item-card">
+                        <div class="shop-item-icon">💖</div>
+                        <div class="shop-item-info">
+                            <h4>Heart Restorer</h4>
+                            <p>Recovers 1 lost heart life in game</p>
+                            <span class="shop-owned-tag">Owned: <span id="shopOwnedHeal">1</span></span>
+                        </div>
+                        <button class="shop-buy-btn" onclick="game.buyItem('heal', 150)">
+                            🪙 150 Buy
+                        </button>
+                    </div>
+
+                    <div class="shop-item-card">
+                        <div class="shop-item-icon">⚡</div>
+                        <div class="shop-item-info">
+                            <h4>Free Pass</h4>
+                            <p>Instantly solves and unlocks insights</p>
+                            <span class="shop-owned-tag">Owned: <span id="shopOwnedSkip">1</span></span>
+                        </div>
+                        <button class="shop-buy-btn" onclick="game.buyItem('skip', 250)">
+                            🪙 250 Buy
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 2: Themes -->
+            <div id="shopTabThemes" class="shop-tab-pane">
+                <div class="shop-items-grid">
+                    <!-- 1. Cyberpunk -->
+                    <div class="shop-item-card theme-card" id="themeCardCyberpunk">
+                        <div class="theme-preview-palette cyberpunk-preview"></div>
+                        <div class="shop-item-info">
+                            <h4>🟣 Cyberpunk Violet</h4>
+                            <p>Default dark neon purple & indigo</p>
+                        </div>
+                        <button class="shop-theme-action-btn" id="btnThemeCyberpunk" onclick="game.applyTheme('cyberpunk')">
+                            Equipped
+                        </button>
+                    </div>
+
+                    <!-- 2. Synthwave -->
+                    <div class="shop-item-card theme-card" id="themeCardSynthwave">
+                        <div class="theme-preview-palette synthwave-preview"></div>
+                        <div class="shop-item-info">
+                            <h4>🌅 Synthwave Sunset</h4>
+                            <p>Vibrant magenta, orange & neon pink</p>
+                        </div>
+                        <button class="shop-theme-action-btn" id="btnThemeSynthwave" onclick="game.buyOrEquipTheme('synthwave', 300)">
+                            🪙 300 Unlock
+                        </button>
+                    </div>
+
+                    <!-- 3. Emerald Forest -->
+                    <div class="shop-item-card theme-card" id="themeCardEmerald">
+                        <div class="theme-preview-palette emerald-preview"></div>
+                        <div class="shop-item-info">
+                            <h4>🌲 Emerald Forest</h4>
+                            <p>Bioluminescent jade & mint glow</p>
+                        </div>
+                        <button class="shop-theme-action-btn" id="btnThemeEmerald" onclick="game.buyOrEquipTheme('emerald', 300)">
+                            🪙 300 Unlock
+                        </button>
+                    </div>
+
+                    <!-- 4. Pastel Dream -->
+                    <div class="shop-item-card theme-card" id="themeCardPastel">
+                        <div class="theme-preview-palette pastel-preview"></div>
+                        <div class="shop-item-info">
+                            <h4>🌸 Pastel Dream</h4>
+                            <p>Anime light mode & soft candy hues</p>
+                        </div>
+                        <button class="shop-theme-action-btn" id="btnThemePastel" onclick="game.buyOrEquipTheme('pastel', 400)">
+                            🪙 400 Unlock
+                        </button>
+                    </div>
+
+                    <!-- 5. Midnight Nebula -->
+                    <div class="shop-item-card theme-card" id="themeCardMidnight">
+                        <div class="theme-preview-palette midnight-preview"></div>
+                        <div class="shop-item-info">
+                            <h4>🌌 Midnight Nebula</h4>
+                            <p>Deep space navy & starlight gold</p>
+                        </div>
+                        <button class="shop-theme-action-btn" id="btnThemeMidnight" onclick="game.buyOrEquipTheme('midnight', 500)">
+                            🪙 500 Unlock
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3: Mascot Wardrobe -->
+            <div id="shopTabHats" class="shop-tab-pane">
+                <div class="shop-items-grid">
+                    <!-- None -->
+                    <div class="shop-item-card hat-card" id="hatCardNone">
+                        <div class="shop-item-icon">✨</div>
+                        <div class="shop-item-info">
+                            <h4>Classic Explorer</h4>
+                            <p>Natural original explorer look</p>
+                        </div>
+                        <button class="shop-hat-action-btn" id="btnHatNone" onclick="game.equipHat('none')">
+                            Equip
+                        </button>
+                    </div>
+
+                    <!-- Wizard Hat -->
+                    <div class="shop-item-card hat-card" id="hatCardWizard">
+                        <div class="shop-item-icon">🧙‍♂️</div>
+                        <div class="shop-item-info">
+                            <h4>Mystic Wizard Hat</h4>
+                            <p>Arcane spellcasting hat with stars</p>
+                        </div>
+                        <button class="shop-hat-action-btn" id="btnHatWizard" onclick="game.buyOrEquipHat('wizard', 250)">
+                            🪙 250 Unlock
+                        </button>
+                    </div>
+
+                    <!-- Royal Crown -->
+                    <div class="shop-item-card hat-card" id="hatCardCrown">
+                        <div class="shop-item-icon">👑</div>
+                        <div class="shop-item-info">
+                            <h4>Royal Golden Crown</h4>
+                            <p>Majestic jeweled gold crown</p>
+                        </div>
+                        <button class="shop-hat-action-btn" id="btnHatCrown" onclick="game.buyOrEquipHat('crown', 400)">
+                            🪙 400 Unlock
+                        </button>
+                    </div>
+
+                    <!-- Cyber Goggles -->
+                    <div class="shop-item-card hat-card" id="hatCardGoggles">
+                        <div class="shop-item-icon">🥽</div>
+                        <div class="shop-item-info">
+                            <h4>Neon VR Goggles</h4>
+                            <p>Futuristic cybernetic HUD visor</p>
+                        </div>
+                        <button class="shop-hat-action-btn" id="btnHatGoggles" onclick="game.buyOrEquipHat('goggles', 200)">
+                            🪙 200 Unlock
+                        </button>
+                    </div>
+
+                    <!-- Angel Halo -->
+                    <div class="shop-item-card hat-card" id="hatCardHalo">
+                        <div class="shop-item-icon">😇</div>
+                        <div class="shop-item-info">
+                            <h4>Celestial Angel Halo</h4>
+                            <p>Glowing divine golden ring</p>
+                        </div>
+                        <button class="shop-hat-action-btn" id="btnHatHalo" onclick="game.buyOrEquipHat('halo', 300)">
+                            🪙 300 Unlock
+                        </button>
+                    </div>
+
+                    <!-- Pirate Bandana -->
+                    <div class="shop-item-card hat-card" id="hatCardPirate">
+                        <div class="shop-item-icon">🏴‍☠️</div>
+                        <div class="shop-item-info">
+                            <h4>Pirate Captain Bandana</h4>
+                            <p>Bold crimson skull bandana</p>
+                        </div>
+                        <button class="shop-hat-action-btn" id="btnHatPirate" onclick="game.buyOrEquipHat('pirate', 250)">
+                            🪙 250 Unlock
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <button class="modal-btn secondary" style="margin-top: 16px;" onclick="game.closeAllModals()">
+                Close Shop
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL 5: 📜 SHAREABLE DIGITAL CERTIFICATE
+         ========================================== -->
+    <div id="modalCertificate" class="modal-overlay">
+        <div class="modal-content cert-modal-content">
+            <div class="modal-header-row cert-modal-header">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div class="modal-icon cert-header-icon">📜</div>
+                    <div style="text-align: left;">
+                        <h2 class="modal-title" style="color: #fbbf24; margin:0; font-size:1.35rem; letter-spacing: 0.5px;">Certificate of Mastery</h2>
+                        <p class="modal-desc" style="margin:0; font-size:0.8rem; color: #94a3b8;">High-definition official credential with verifiable ID and institutional honors seal.</p>
+                    </div>
+                </div>
+                <button class="icon-btn" onclick="game.closeAllModals()" style="font-size:1.1rem;" title="Close Certificate">✕</button>
+            </div>
+
+            <!-- Recipient Name Input Bar -->
+            <div class="cert-name-customizer-bar">
+                <span class="cert-input-icon">👤</span>
+                <label for="certPlayerNameInput" class="cert-input-label">Recipient Name:</label>
+                <input 
+                    type="text" 
+                    id="certPlayerNameInput" 
+                    class="user-text-input cert-name-input" 
+                    value="Punnawit Janthamrong" 
+                    placeholder="Enter recipient full name..." 
+                    oninput="game.renderCertificateCanvas()"
+                    maxlength="40"
+                    spellcheck="false"
+                >
+            </div>
+
+            <!-- Certificate Canvas Container (Responsive 3:2 Display) -->
+            <div class="certificate-canvas-wrapper">
+                <canvas id="certificateCanvas" width="1200" height="800"></canvas>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="modal-actions-row cert-actions-row">
+                <button class="modal-btn primary cert-dl-btn" onclick="game.downloadCertificate()">
+                    📥 Download Certificate (HD PNG)
+                </button>
+                <button class="modal-btn secondary cert-print-btn" onclick="game.printCertificate()">
+                    🖨️ Print / Save PDF
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL 6: 👥 2-PLAYER DUEL VICTORY
+         ========================================== -->
+    <div id="modalDuelVictory" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon" id="duelWinnerIcon">👑</div>
+            <h2 class="modal-title" id="duelWinnerTitle" style="color: #38bdf8;">PLAYER 1 WINS!</h2>
+            <p id="duelWinnerSubtitle" class="modal-desc">Unstoppable reflexes! You reached 5 points first.</p>
+
+            <div class="modal-score-summary">
+                <div>
+                    <div style="font-size: 0.8rem; color: #38bdf8; font-weight: 700;">PLAYER 1</div>
+                    <div id="duelSummaryP1" style="font-size: 1.6rem; font-weight: 900; color: #38bdf8;">5</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.8rem; color: #f43f5e; font-weight: 700;">PLAYER 2</div>
+                    <div id="duelSummaryP2" style="font-size: 1.6rem; font-weight: 900; color: #f43f5e;">3</div>
+                </div>
+            </div>
+
+            <button class="modal-btn primary" onclick="game.startDuelMode()">
+                ⚔️ Play Again (Rematch)
+            </button>
+            <button class="modal-btn secondary" onclick="game.goToHome()">
+                Return to Main Hub
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL 7: ⏱️ TIME ATTACK SUMMARY
+         ========================================== -->
+    <div id="modalTimeAttackSummary" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon">⏱️</div>
+            <h2 class="modal-title" style="color: #fbbf24;">TIME'S UP!</h2>
+            <p class="modal-desc">Great speed and accuracy! Here is your speedrun report:</p>
+
+            <div class="modal-score-summary">
+                <div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">FINAL SCORE</div>
+                    <div id="taSummaryScore" style="font-size: 1.4rem; font-weight: 900; color: #38bdf8;">0</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">SOLVED</div>
+                    <div id="taSummarySolved" style="font-size: 1.4rem; font-weight: 900; color: #10b981;">0</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.78rem; color: var(--text-muted); font-weight: 700;">COINS EARNED</div>
+                    <div id="taSummaryCoins" style="font-size: 1.4rem; font-weight: 900; color: #fbbf24;">+0 🪙</div>
+                </div>
+            </div>
+
+            <button class="modal-btn primary" onclick="game.startTimeAttack()">
+                🔄 Play Time Attack Again
+            </button>
+            <button class="modal-btn secondary" onclick="game.goToHome()">
+                Return to Main Hub
+            </button>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         MODAL 8: 🐉 BOSS SLAIN VICTORY
+         ========================================== -->
+    <div id="modalBossVictory" class="modal-overlay">
+        <div class="modal-content">
+            <div class="modal-icon">🐉</div>
+            <h2 class="modal-title" style="color: #34d399;">LEXICON DRAGON DEFEATED!</h2>
+            <p class="modal-desc">Incredible mastery! You conquered the Ancient Dragon with pure grammatical might.</p>
+
+            <div class="modal-score-summary">
+                <div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">BONUS SCORE</div>
+                    <div style="font-size: 1.5rem; font-weight: 900; color: #38bdf8;">+1,000</div>
+                </div>
+                <div>
+                    <div style="font-size: 0.8rem; color: var(--text-muted); font-weight: 700;">TREASURE COINS</div>
+                    <div style="font-size: 1.5rem; font-weight: 900; color: #fbbf24;">+300 🪙</div>
+                </div>
+            </div>
+
+            <button class="modal-btn primary" onclick="game.goToHome()">
+                🏆 Claim Victory & Return to Hub
             </button>
         </div>
     </div>
